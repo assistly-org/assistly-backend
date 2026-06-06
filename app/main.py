@@ -1,8 +1,10 @@
+# main.py  (now at ROOT level)
 from fastapi import FastAPI
+from app.presentation.routes.user import router
 
-app = FastAPI()
-
+app = FastAPI(title="Clean Architecture Demo")
 
 @app.get("/")
-def root():
-    return {"message": "Assistly Backend Running"}
+def server_status():
+    return {"status":"Fast API Server Started ..."}
+app.include_router(router, prefix="/api")
