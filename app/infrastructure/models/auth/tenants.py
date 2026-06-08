@@ -15,7 +15,11 @@ class Tenant(Base):
     __table_args__ = {'schema': 'assistly_auth'} # Enforce global schema
 
     # --- 1. CORE IDENTIFIERS ---
-    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    id: Mapped[str] = mapped_column(
+        String(50), 
+        primary_key=True, 
+        default=lambda: f"tnt-{uuid.uuid4().hex[:16]}"
+    )
     name: Mapped[str] = mapped_column(String(255), nullable=False)
     slug: Mapped[str] = mapped_column(String(255), unique=True, nullable=False)
     logo_url: Mapped[Optional[str]] = mapped_column(String, nullable=True)
@@ -38,12 +42,12 @@ class Tenant(Base):
     cancel_at_period_end: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
 
     # --- 4. DATA OWNERSHIP ---
-    owner_id: Mapped[uuid.UUID] = mapped_column(
+    owner_id: Mapped[str] = mapped_column(
         ForeignKey("assistly_auth.users.id", ondelete="RESTRICT"),
         nullable=False
     )
     
-    created_by: Mapped[Optional[uuid.UUID]] = mapped_column(
+    created_by: Mapped[Optional[str]] = mapped_column(
         ForeignKey("assistly_auth.users.id", ondelete="SET NULL"),
         nullable=True
     )

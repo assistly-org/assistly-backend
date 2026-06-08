@@ -14,10 +14,14 @@ class Address(Base):
     __tablename__ = "addresses"
     __table_args__ = {'schema': 'assistly_auth'} # Keep it in the global schema
 
-    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    id: Mapped[str] = mapped_column(
+        String(50), 
+        primary_key=True, 
+        default=lambda: f"adr-{uuid.uuid4().hex[:16]}"
+    )
     
     # Link to the user table
-    user_id: Mapped[uuid.UUID] = mapped_column(
+    user_id: Mapped[str] = mapped_column(
         ForeignKey("assistly_auth.users.id", ondelete="CASCADE"), 
         nullable=False
     )
