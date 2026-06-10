@@ -11,9 +11,10 @@ app.add_middleware(SubdomainTenantMiddleware)
 app.include_router(tenant_route.router)
 app.include_router(register_service.router)
 
+# db: Session = Depends(get_db)
 # Inject the DB dependency here!
 @app.get("/")
-def server_status(db: Session = Depends(get_db)):
+def server_status():
     # The moment FastAPI tries to inject 'db' here, it runs get_db(), 
     # attempts to switch the schema, fails, and throws your 404!
     return {"status":"Fast API Server Started ..."}

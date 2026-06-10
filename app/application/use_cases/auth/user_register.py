@@ -63,6 +63,7 @@ class RegisterService:
         # --- PREPARE PAYLOAD ---
         hashed_password = self.hash_service.hash_password(data.password)
         otp_code = str(random.randint(100000, 999999))
+        logger.info(f"otp code {otp_code}. OTP dispatched.")
 
         payload = json.dumps(
             {
