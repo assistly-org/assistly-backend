@@ -26,7 +26,17 @@ except Exception as e:
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
+# ===========================
+# For Auth and commen tables
+#============================
 class Base(DeclarativeBase):
+    """Used ONLY for Global models (Users, Tenants)"""
+    pass
+# ==========================
+# For Tenant based tables
+#===========================
+class TenantBase(DeclarativeBase):
+    """Used ONLY for Tenant-specific models (Products, Customers, etc.)"""
     pass
 
 # ⚡ THE SPEED UP: In-Memory Cache for validated schemas
