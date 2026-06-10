@@ -37,19 +37,19 @@ def get_verify_service(db: Session = Depends(get_db)) -> VerifyService:
     )
 
 
-def get_register_service() -> RegisterService:
+def get_register_service(db: Session = Depends(get_db)) -> RegisterService:
     """
     Builds and returns a fully initialized RegisterService.
     FastAPI will automatically run this whenever a route requests it.
     """
     # 1. Provide the DB session to the Repositories
-    user_repo = UserRepository()
-    tenant_repo = TenantRepository()
-    email_service = EmailService()  # <-- Initialize it here
+    user_repo = UserRepository(db)      # ⚡ db added here!
+    tenant_repo = TenantRepository(db)  # ⚡ db added here!
+    email_service = EmailService()
 
     # 2. Initialize the Hash Service
     hash_service = BcryptHashService()
-    cache_service = RedisService()  # ADD THIS
+    cache_service = RedisService()
 
     # 3. Inject all dependencies into the Service
     return RegisterService(
@@ -57,5 +57,5 @@ def get_register_service() -> RegisterService:
         tenant_repo=tenant_repo,
         hash_service=hash_service,
         email_service=email_service,
-        ache_service=cache_service,  # ADD THIS
+        cache_service=cache_service,  # ⚡ Typo fixed here!
     )

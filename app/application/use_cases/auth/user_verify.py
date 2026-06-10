@@ -40,13 +40,17 @@ class VerifyService:
                 password_hash=payload["password_hash"],
                 is_active=True,
             )
+            # ⚡ CRITICAL: Ensure your UserRepository maps the generated DB ID back to this domain entity!
             new_user = self.user_repo.create_user(new_user)
 
             # 2. Create Tenant
+            # ⚡ DEFENSIVE EXTRACTION: Guarantee Postgres never receives a null name
+            safe_name = payload.get("company_name") or payload.get("subdomain")
+
             new_tenant = Tenant(
-                name=payload["company_name"],
+                name=safe_name,
                 slug=payload["subdomain"],
-                owner_id=new_user.id,
+                owner_id=new_user.id,      # Now safely populated from the repo
                 created_by=new_user.id,
             )
             self.tenant_repo.create_tenant(new_tenant)
