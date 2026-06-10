@@ -1,4 +1,3 @@
-# app/infrastructure/models/tenant/bookings.py
 
 from sqlalchemy import Column, String, DateTime, Integer
 from sqlalchemy.sql import func
