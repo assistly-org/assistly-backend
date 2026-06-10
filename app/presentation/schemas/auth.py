@@ -21,3 +21,4 @@ class VerifyResponse(BaseModel):
     message: str
     access_token: str
     token_type: str = "bearer"
+    refresh_token: str

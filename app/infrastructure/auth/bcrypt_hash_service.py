@@ -1,5 +1,5 @@
 import bcrypt
-from app.domain.interfaces.
+from app.domain.interfaces.hash_service import IHashService
 
 
 class BcryptHashService(IHashService):

@@ -28,9 +28,8 @@ def verify(
     db: Session = Depends(get_db),
     service=Depends(get_verify_service),
 ):
-
     result = service.verify_otp(data=request, db=db)
-
+    
     response.set_cookie(
         key="refresh_token",
         value=result.refresh_token,  # Your service still provides this property
