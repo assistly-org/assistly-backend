@@ -10,40 +10,46 @@ from app.infrastructure.repositories.tenant_repository import TenantRepository
 from app.infrastructure.auth.bcrypt_hash_service import BcryptHashService
 
 # Import your RegisterService (adjust path depending on where you saved it)
-from app.application.use_cases.user_register import RegisterService
+from app.application.use_cases.auth.user_register import RegisterService
 
 # Add this import at the top of your file
-from app.application.use_cases.verify_user import VerifyService
+from app.application.use_cases.auth.user_verify import VerifyService
 
 # ... (your existing get_register_service code) ...
 from app.infrastructure.email.smtp_services import EmailService
 
 
+from app.infrastructure.cache.redis_service import RedisService
+from app.infrastructure.auth.jwt_services import JwtService
+
+
 def get_verify_service(db: Session = Depends(get_db)) -> VerifyService:
-    """
-    Builds and returns a fully initialized VerifyService.
-    FastAPI will automatically run this whenever the /verify route is called.
-    """
-    # 1. Initialize the Repositories with the current database session
     user_repo = UserRepository(db)
     tenant_repo = TenantRepository(db)
+    cache_service = RedisService()
+    token_service = JwtService()
 
-    # 2. Inject the dependencies into the VerifyService
-    return VerifyService(user_repo=user_repo, tenant_repo=tenant_repo)
+    return VerifyService(
+        user_repo=user_repo,
+        tenant_repo=tenant_repo,
+        cache_service=cache_service,
+        token_service=token_service,
+    )
 
 
-def get_register_service(db: Session = Depends(get_db)) -> RegisterService:
+def get_register_service() -> RegisterService:
     """
     Builds and returns a fully initialized RegisterService.
     FastAPI will automatically run this whenever a route requests it.
     """
     # 1. Provide the DB session to the Repositories
-    user_repo = UserRepository(db)
-    tenant_repo = TenantRepository(db)
+    user_repo = UserRepository()
+    tenant_repo = TenantRepository()
     email_service = EmailService()  # <-- Initialize it here
 
     # 2. Initialize the Hash Service
     hash_service = BcryptHashService()
+    cache_service = RedisService()  # ADD THIS
 
     # 3. Inject all dependencies into the Service
     return RegisterService(
@@ -51,4 +57,5 @@ def get_register_service(db: Session = Depends(get_db)) -> RegisterService:
         tenant_repo=tenant_repo,
         hash_service=hash_service,
         email_service=email_service,
+        ache_service=cache_service,  # ADD THIS
     )

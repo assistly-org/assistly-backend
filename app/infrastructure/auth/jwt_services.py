@@ -1,19 +1,23 @@
-# app/infrastructure/auth/jwt_service.py
 from datetime import datetime, timedelta
 from typing import Optional, Dict, Any
 from jose import jwt, JWTError
+from app.domain.interfaces.token_service import ITokenService
 
-SECRET_KEY = "your-super-secret-key-change-this-in-production"
-ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 30
-REFRESH_TOKEN_EXPIRE_DAYS = 7
 
-class JwtService:
+import os
+
+SECRET_KEY = os.getenv("SECRET_KEY")
+ALGORITHM = os.getenv("JWT_ALGORITHM", "HS256")
+ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", 30))
+REFRESH_TOKEN_EXPIRE_DAYS = int(os.getenv("REFRESH_TOKEN_EXPIRE_DAYS", 7))
+
+
+class JwtService(ITokenService):
     @staticmethod
     def create_token(data: dict, expires_delta: timedelta, token_type: str) -> str:
         to_encode = data.copy()
         expire = datetime.utcnow() + expires_delta
-        
+
         # We explicitly tag the token type so they cannot be swapped
         to_encode.update({"exp": expire, "token_type": token_type})
         return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)

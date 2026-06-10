@@ -2,7 +2,7 @@
 import logging
 from sqlalchemy.orm import Session
 from app.infrastructure.models.auth.users import User
-from app.domain.repositories.user import IUserRepository  # <-- Import the interface
+from app.domain.interfaces.user_repository import IUserRepository  # <-- Import the interface
 
 logger = logging.getLogger("assistly")
 
