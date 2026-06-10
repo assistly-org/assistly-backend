@@ -18,9 +18,16 @@ if config.config_file_name is not None:
 target_metadata = TenantBase.metadata
 tenant_schema = config.attributes.get('tenant_schema') or os.environ.get('TENANT_SCHEMA')
 
+
 def include_object(object, name, type_, reflected, compare_to):
     if type_ == "table":
+        # ⚡ ADD THIS: Tell Alembic to ignore its own tracking table
+        if name == "alembic_version_tenant":
+            return False
+            
+        # Keep your existing rule that ensures it only tracks TenantBase tables
         return object.schema is None
+        
     return True
 
 def run_migrations_online() -> None:

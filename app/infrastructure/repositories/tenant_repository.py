@@ -1,4 +1,4 @@
-import logging
+from app.infrastructure.logger import logger
 from sqlalchemy.orm import Session
 
 # ⚡ 1. ALIAS YOUR IMPORTS TO PREVENT COLLISIONS
@@ -26,6 +26,26 @@ class TenantRepository(ITenantRepository):
         self.db.refresh(db_tenant)
         
         return tenant
+    
+    def get_all_tenants(self) -> list[DomainTenant]:
+        """
+        Fetches all registered tenants from the global authentication database 
+        and maps them into Domain Entities.
+        """
+        logger.info("Fetching all tenants from the global database configuration...")
+        db_tenants = self.db.query(ORMTenant).all()
+        
+        return [
+            DomainTenant(
+                id=db.id,
+                slug=db.slug,
+                owner_id=db.owner_id,
+                name=getattr(db, 'name', db.slug)
+            )
+            for db in db_tenants
+        ]
+    
+    
 
     def get_by_slug(self, slug: str) -> DomainTenant | None:
         db_tenant = self.db.query(ORMTenant).filter(ORMTenant.slug == slug).first()
