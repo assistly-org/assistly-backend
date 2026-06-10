@@ -12,6 +12,11 @@ class ITenantRepository(ABC):
         pass
 
     @abstractmethod
+    def get_all_tenants(self) -> list[Tenant]:
+        """Fetch all tenants from storage."""
+        pass
+
+    @abstractmethod
     def get_by_slug(self, slug: str) -> Optional[Tenant]:
         """Retrieves a tenant by their unique subdomain workspace slug."""
         pass
