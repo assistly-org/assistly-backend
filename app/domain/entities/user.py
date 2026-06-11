@@ -1,8 +1,20 @@
-# The core User object — pure Python, no imports from FastAPI or DB
-# This represents what a "User" means in your business world
+from dataclasses import dataclass, field
+from datetime import datetime
+from typing import Optional
 
+@dataclass
 class User:
-    def __init__(self, id: int, name: str, email: str):
-        self.id = id
-        self.name = name
-        self.email = email
+    email: str
+    password_hash: str
+    auth_provider: str = "local"
+    id: Optional[int] = None
+    is_active: bool = True
+    created_at: datetime = field(default_factory=datetime.utcnow)
+
+    # Core Business Logic: A user can change their password
+    def update_password(self, new_hash: str) -> None:
+        self.password_hash = new_hash
+
+    # Core Business Logic: A user can be deactivated
+    def deactivate(self) -> None:
+        self.is_active = False
