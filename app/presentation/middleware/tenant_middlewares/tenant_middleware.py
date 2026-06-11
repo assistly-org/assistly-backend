@@ -1,6 +1,6 @@
 from fastapi import Request
 from starlette.middleware.base import BaseHTTPMiddleware
-from app.infrastructure.tenant_context import set_tenant_schema
+from app.infrastructure.db.tenant_context import set_tenant_schema
 from app.infrastructure.logger import logger
 
 

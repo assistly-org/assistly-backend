@@ -9,7 +9,7 @@ celery_app = Celery(
     backend=redis_url,
     # This tells Celery exactly where your background tasks are written
     include=[
-        "app.infrastructure.email.tasks",
+        "app.infrastructure.worker.email.tasks",
         "app.infrastructure.worker.tenant_tasks",  
         "app.infrastructure.worker.tenant_migration_tasks",  
     ],

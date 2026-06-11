@@ -1,11 +1,9 @@
 from app.infrastructure.logger import logger
 from sqlalchemy.orm import Session
-
-# ⚡ 1. ALIAS YOUR IMPORTS TO PREVENT COLLISIONS
 from app.infrastructure.models.auth.tenants import Tenant as ORMTenant
-# Adjust this import path if your domain entity lives somewhere else!
 from app.domain.entities.tenant import Tenant as DomainTenant 
 from app.domain.interfaces.tenant_repository import ITenantRepository
+
 
 class TenantRepository(ITenantRepository):
     def __init__(self, db: Session):
@@ -20,7 +18,6 @@ class TenantRepository(ITenantRepository):
             name=getattr(tenant, 'name', None) or tenant.slug, 
             owner_id=tenant.owner_id
         )
-        
         self.db.add(db_tenant)
         self.db.flush()
         self.db.refresh(db_tenant)
@@ -44,17 +41,16 @@ class TenantRepository(ITenantRepository):
             )
             for db in db_tenants
         ]
-    
-    
 
     def get_by_slug(self, slug: str) -> DomainTenant | None:
         db_tenant = self.db.query(ORMTenant).filter(ORMTenant.slug == slug).first()
         if db_tenant:
-            # ⚡ 3. Map ORM Model back to Domain Entity before returning
             return DomainTenant(
                 id=db_tenant.id,
                 slug=db_tenant.slug,
-                owner_id=db_tenant.owner_id
+                owner_id=db_tenant.owner_id,
+                name=getattr(db_tenant, 'name', db_tenant.slug), 
+                created_by=getattr(db_tenant, 'created_by', db_tenant.owner_id) 
             )
         return None
 
