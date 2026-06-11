@@ -16,6 +16,8 @@ from app.application.use_cases.auth.user_register import RegisterService
 from app.application.use_cases.auth.user_verify import VerifyService
 from app.application.use_cases.auth.user_login import LoginService
 
+from app.application.use_cases.auth.refresh_token import RefreshTokenService
+from app.application.use_cases.auth.user_logout import LogoutService
 
 def get_verify_service(db: Session = Depends(get_db)) -> VerifyService:
     user_repo = UserRepository(db)
@@ -56,11 +58,30 @@ def get_login_service(db: Session = Depends(get_db)) -> LoginService:
     Builds the LoginService so the Router doesn't have to.
     """
     user_repo = UserRepository(db)
+    tenant_repo = TenantRepository(db)
     hash_service = BcryptHashService() 
     token_service = JwtService() 
 
     return LoginService(
         user_repo=user_repo, 
+        tenant_repo = tenant_repo,
         hash_service=hash_service, 
         token_service=token_service
+
     )
+
+def get_refresh_service(db: Session = Depends(get_db)) -> RefreshTokenService:
+    user_repo = UserRepository(db)
+    token_service = JwtService()
+    cache_service = RedisService() # ⚡ Initialize Redis
+    
+    return RefreshTokenService(
+        user_repo=user_repo, 
+        token_service=token_service,
+        cache_service=cache_service # ⚡ Pass it in!
+    )
+
+def get_logout_service() -> LogoutService:
+    # Notice we don't even need the database session for this! Just Redis.
+    cache_service = RedisService()
+    return LogoutService(cache_service=cache_service)

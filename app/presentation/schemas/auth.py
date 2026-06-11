@@ -11,7 +11,6 @@ class RegisterRequest(BaseModel):
 
 class RegisterResponse(BaseModel):
     message: str
-    # Notice: No tokens here anymore! Just a success message.
 
 # --- VERIFICATION ---
 class VerifyRequest(BaseModel):
@@ -22,15 +21,20 @@ class VerifyResponse(BaseModel):
     message: str
     access_token: str
     token_type: str = "bearer"
-    refresh_token: str
+    user: Dict[str, str]
 
-
+# --- LOGIN ---
 class LoginRequest(BaseModel):
     email: str
     password: str
 
 class LoginResponse(BaseModel):
+    message : str
     access_token: str
-    refresh_token: str
     token_type: str = "bearer"
     user: Dict[str, str]
+
+# --- TOKEN REFRESH ---
+class TokenRefreshResponse(BaseModel):
+    access_token: str
+    token_type: str = "bearer"

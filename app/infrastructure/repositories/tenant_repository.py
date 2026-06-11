@@ -3,6 +3,7 @@ from sqlalchemy.orm import Session
 from app.infrastructure.models.auth.tenants import Tenant as ORMTenant
 from app.domain.entities.tenant import Tenant as DomainTenant 
 from app.domain.interfaces.tenant_repository import ITenantRepository
+from typing import Optional
 
 
 class TenantRepository(ITenantRepository):
@@ -64,12 +65,19 @@ class TenantRepository(ITenantRepository):
             )
         return None
 
-    def get_by_owner_id(self, owner_id: int) -> DomainTenant | None:
+    def get_by_owner_id(self, owner_id: str) -> Optional[DomainTenant]:
+        # 1. Fetch the ORM model from the database
         db_tenant = self.db.query(ORMTenant).filter(ORMTenant.owner_id == owner_id).first()
-        if db_tenant:
-            return DomainTenant(
-                id=db_tenant.id, 
-                slug=db_tenant.slug, 
-                owner_id=db_tenant.owner_id
-            )
-        return None
+        
+        if not db_tenant:
+            return None
+            
+        # 2. Map ORM model -> Domain Entity
+        # ⚡ Ensure every single argument required by the DomainTenant dataclass is here!
+        return DomainTenant(
+            id=str(db_tenant.id),
+            name=db_tenant.name or "Unknown Tenant", # Fallback to prevent crash
+            slug=db_tenant.slug,
+            owner_id=str(db_tenant.owner_id),
+            created_by=str(db_tenant.created_by)      # ⚡ This was likely missing!
+        )
