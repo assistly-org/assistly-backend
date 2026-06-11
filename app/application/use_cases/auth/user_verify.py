@@ -7,14 +7,15 @@ from app.domain.exceptions import RegistrationExpiredError, InvalidOTPError
 
 logger = logging.getLogger("assistly")
 
+
 class VerifyService:
     def __init__(
-        self, 
-        user_repo, 
-        tenant_repo, 
-        cache_service, 
+        self,
+        user_repo,
+        tenant_repo,
+        cache_service,
         token_service,
-        task_dispatcher # ⚡ Inject the Celery abstractor here
+        task_dispatcher  # ⚡ Inject the Celery abstractor here
     ):
         self.user_repo = user_repo
         self.tenant_repo = tenant_repo
@@ -27,7 +28,8 @@ class VerifyService:
         raw = self.cache_service.get(f"registration:{data.email}")
         if not raw:
             logger.warning(f"No pending registration found for {data.email}")
-            raise RegistrationExpiredError("OTP has expired or registration was never initiated.")
+            raise RegistrationExpiredError(
+                "OTP has expired or registration was never initiated.")
 
         payload = json.loads(raw)
 
@@ -74,15 +76,19 @@ class VerifyService:
 
             logger.info(f"User {data.email} verified and logged in.")
 
-            return VerifyResponse(
-                message="Welcome to your workspace! Your environment is being prepared.",
-                access_token=self.token_service.create_access_token(data=token_payload),
-                refresh_token=self.token_service.create_refresh_token(
-                    data={"sub": str(new_user.id)}
-                ),
-            )
+            return {
+                "message": "Welcome to your workspace! Your environment is being prepared.",
+                "access_token": self.token_service.create_access_token(data=token_payload),
+                "refresh_token": self.token_service.create_refresh_token(data={"sub": str(new_user.id)}),
+                "token_type": "bearer",
+                "user": {
+                    "id": str(new_user.id),
+                    "email": new_user.email
+                }
+            }
 
         except Exception as e:
-            logger.error(f"Verification pipeline crashed for {data.email}", exc_info=True)
+            logger.error(
+                f"Verification pipeline crashed for {data.email}", exc_info=True)
             # Raise a generic Domain Error that the Router will catch
             raise Exception("Workspace setup failed. Please try again.")
