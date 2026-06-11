@@ -34,22 +34,19 @@ class UserRepository(IUserRepository):
         
         return user
 
-    def get_by_email(self, email: str) -> DomainUser | None:
-        logger.info(f"Database lookup initiated for email context: '{email}'")
-        
+    def get_by_email(self, email: str):
         db_user = self.db.query(ORMUser).filter(ORMUser.email == email).first()
-        
-        if db_user:
-            logger.info(f"Database lookup success. Found user ID: {db_user.id}")
-            # Map back to DomainUser before returning to the use case!
-            return DomainUser(
-                id=str(db_user.id), 
-                email=db_user.email, 
-                password_hash=db_user.password_hash
-            )
-        else:
-            logger.warning(f"Database lookup empty. No record matches email: '{email}'")
+        if not db_user:
             return None
+            
+        return ORMUser(
+            id=db_user.id,
+            email=db_user.email,
+            password_hash=db_user.password_hash,
+            is_active=db_user.is_active,
+            role=db_user.role 
+        )
+
 
     def get_by_id(self, user_id: str) -> DomainUser | None:
         db_user = self.db.query(ORMUser).filter(ORMUser.id == user_id).first()

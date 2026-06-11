@@ -12,3 +12,9 @@ class UserAlreadyExistsError(Exception):
 
 class SubdomainTakenError(Exception):
     pass
+
+class InvalidCredentialsError(Exception):
+    pass
+
+class AccountDisabledError(Exception):
+    pass

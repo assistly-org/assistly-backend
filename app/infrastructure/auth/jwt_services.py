@@ -3,7 +3,6 @@ from typing import Optional, Dict, Any
 from jose import jwt, JWTError
 from app.domain.interfaces.token_service import ITokenService
 
-
 import os
 
 SECRET_KEY = os.getenv("SECRET_KEY")
@@ -13,6 +12,7 @@ REFRESH_TOKEN_EXPIRE_DAYS = int(os.getenv("REFRESH_TOKEN_EXPIRE_DAYS", 7))
 
 
 class JwtService(ITokenService):
+    
     @staticmethod
     def create_token(data: dict, expires_delta: timedelta, token_type: str) -> str:
         to_encode = data.copy()

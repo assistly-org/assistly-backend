@@ -1,5 +1,6 @@
 # app/presentation/schemas/auth.py
 from pydantic import BaseModel, EmailStr
+from typing import Dict
 
 # --- REGISTRATION ---
 class RegisterRequest(BaseModel):
@@ -22,3 +23,14 @@ class VerifyResponse(BaseModel):
     access_token: str
     token_type: str = "bearer"
     refresh_token: str
+
+
+class LoginRequest(BaseModel):
+    email: str
+    password: str
+
+class LoginResponse(BaseModel):
+    access_token: str
+    refresh_token: str
+    token_type: str = "bearer"
+    user: Dict[str, str]
