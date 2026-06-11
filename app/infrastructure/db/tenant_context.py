@@ -1,6 +1,4 @@
 from contextvars import ContextVar
-from typing import Optional
-
 # This creates a thread-safe variable to hold the schema name.
 # It defaults to your global schema so global routes don't break.
 current_tenant_schema: ContextVar[str] = ContextVar("current_tenant_schema", default="assistly_auth")

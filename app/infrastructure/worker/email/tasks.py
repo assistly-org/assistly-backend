@@ -1,6 +1,6 @@
 # app/infrastructure/email/tasks.py
 from app.infrastructure.worker.celery_app import  celery_app
-from app.infrastructure.email.smtp_services import EmailService
+from app.infrastructure.worker.email.smtp_services import EmailService
 
 @celery_app.task(name="send_otp_email_task")
 
