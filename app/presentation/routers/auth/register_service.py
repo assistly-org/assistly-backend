@@ -1,52 +1,56 @@
 # app/presentation/routers/auth.py
-from fastapi import APIRouter, Depends, Response, HTTPException
+
+from fastapi import APIRouter, Depends, Response, HTTPException, status
 from sqlalchemy.orm import Session
+
 from app.infrastructure.db.database import get_db
 from app.presentation.schemas.auth import (
-    RegisterRequest,
-    RegisterResponse,
-    VerifyRequest,
-    VerifyResponse,
+    RegisterRequest, RegisterResponse,
+    VerifyRequest, VerifyResponse,
+    LoginRequest, LoginResponse
 )
-from app.presentation.dependencies.auth_deps import get_register_service, get_verify_service
-from app.domain.exceptions import ValidationError, UserAlreadyExistsError, SubdomainTakenError
-from app.domain.exceptions import RegistrationExpiredError, InvalidOTPError
-
+from app.presentation.dependencies.auth_deps import (
+    get_register_service, 
+    get_verify_service, 
+    get_login_service
+)
+from app.domain.exceptions import (
+    ValidationError, 
+    UserAlreadyExistsError, 
+    SubdomainTakenError,
+    RegistrationExpiredError, 
+    InvalidOTPError,
+    InvalidCredentialsError, 
+    AccountDisabledError
+)
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])
 
 
 @router.post("/register", response_model=RegisterResponse)
-def register(request: RegisterRequest, service=Depends(get_register_service)):
+def register(request: RegisterRequest, service = Depends(get_register_service)):
     try:
         return service.register(data=request)
     except ValidationError as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
     except UserAlreadyExistsError as e:
-        # You can inspect the error message if you want to differentiate 400 vs 409
-        status_code = 400 if "unverified" in str(e) else 409
+        status_code = status.HTTP_400_BAD_REQUEST if "unverified" in str(e) else status.HTTP_409_CONFLICT
         raise HTTPException(status_code=status_code, detail=str(e))
     except SubdomainTakenError as e:
-        raise HTTPException(status_code=409, detail=str(e))
-
-
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(e))
 
 
 @router.post("/verify", response_model=VerifyResponse)
 def verify(
     request: VerifyRequest,
     response: Response,
-    db: Session = Depends(get_db), # ⚡ Keep this here to manage the transaction
-    service=Depends(get_verify_service),
+    db: Session = Depends(get_db), 
+    service = Depends(get_verify_service),
 ):
     try:
-        # 1. Call the service (Notice we no longer pass db=db!)
         result = service.verify_otp(data=request)
-        
-        # 2. Transaction Boundary: Commit the DB ONLY if the service succeeds
         db.commit()
 
-        # 3. Set the HTTP-Only Cookie
         response.set_cookie(
             key="refresh_token",
             value=result.refresh_token,
@@ -55,19 +59,33 @@ def verify(
             samesite="lax",
             max_age=604800,
         )
-        
         return result
 
-    # 4. Handle specific Domain Errors and turn them into HTTP Errors
     except RegistrationExpiredError as e:
         db.rollback()
-        raise HTTPException(status_code=400, detail=str(e))
-        
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
     except InvalidOTPError as e:
         db.rollback()
-        raise HTTPException(status_code=401, detail=str(e))
-        
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=str(e))
     except Exception as e:
         db.rollback()
-        # Log the real error here in production
-        raise HTTPException(status_code=500, detail="Workspace setup failed. Please try again.")
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Workspace setup failed. Please try again.")
+
+
+@router.post("/login", response_model=LoginResponse)
+def login(request: LoginRequest, service = Depends(get_login_service)):
+    try:
+        # Firing the Use Case injected by dependencies.py
+        return service.login(request)
+        
+    except InvalidCredentialsError as e:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail=str(e),
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    except AccountDisabledError as e:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=str(e)
+        )

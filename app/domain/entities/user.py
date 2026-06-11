@@ -10,6 +10,7 @@ class User:
     id: Optional[int] = None
     is_active: bool = True
     created_at: datetime = field(default_factory=datetime.utcnow)
+    role: str = "tenant_admin"
 
     # Core Business Logic: A user can change their password
     def update_password(self, new_hash: str) -> None:
