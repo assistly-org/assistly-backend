@@ -4,7 +4,7 @@ from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker, DeclarativeBase
 from fastapi import HTTPException
 from app.infrastructure.logger import logger 
-from app.infrastructure.tenant_context import get_tenant_schema
+from app.infrastructure.db.tenant_context import get_tenant_schema
 
 load_dotenv()
 
@@ -37,10 +37,10 @@ def get_db():
     try:
         target_schema = get_tenant_schema()
         
-        # 1. Check if we ALREADY validated this tenant in memory (0 milliseconds)
+        # 1. Check if we ALREADY validated this tenant in memory
         if target_schema not in VALIDATED_SCHEMAS:
             
-            # 2. If not in cache, use pg_namespace (10x faster than information_schema)
+            # 2. Use pg_namespace (10x faster than information_schema)
             schema_exists = db.execute(
                 text("SELECT 1 FROM pg_namespace WHERE nspname = :schema"),
                 {"schema": target_schema}
@@ -51,15 +51,16 @@ def get_db():
                 logger.warning(f"Blocked request to non-existent tenant: {target_schema}")
                 raise HTTPException(status_code=404, detail="Tenant workspace not found.")
             
-            # 4. If real, add to cache so we NEVER query the DB for this check again!
+            # 4. Cache it
             VALIDATED_SCHEMAS.add(target_schema)
             logger.info(f"⚡ Cached valid tenant schema in memory: {target_schema}")
             
-        # 5. Switch schema safely and instantly
+        # 5. Switch schema safely
         db.execute(text(f"SET search_path TO {target_schema}"))
              
-        # Hand the safely scoped session back to the FastAPI route
         yield db
         
     finally:
+        # ⚡ CRITICAL FIX: Clean the connection before giving it back to the pool
+        db.execute(text("RESET search_path")) 
         db.close()
