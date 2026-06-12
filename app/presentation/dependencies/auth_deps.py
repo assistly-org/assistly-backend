@@ -1,5 +1,3 @@
-# app/presentation/dependencies/auth_deps.py
-
 from fastapi import Depends
 from sqlalchemy.orm import Session
 from app.infrastructure.db.database import get_db
@@ -72,16 +70,17 @@ def get_login_service(db: Session = Depends(get_db)) -> LoginService:
 
 def get_refresh_service(db: Session = Depends(get_db)) -> RefreshTokenService:
     user_repo = UserRepository(db)
+    tenant_repo = TenantRepository(db) 
     token_service = JwtService()
-    cache_service = RedisService() # ⚡ Initialize Redis
+    cache_service = RedisService() 
     
     return RefreshTokenService(
         user_repo=user_repo, 
+        tenant_repo=tenant_repo, 
         token_service=token_service,
-        cache_service=cache_service # ⚡ Pass it in!
+        cache_service=cache_service 
     )
 
 def get_logout_service() -> LogoutService:
-    # Notice we don't even need the database session for this! Just Redis.
     cache_service = RedisService()
     return LogoutService(cache_service=cache_service)

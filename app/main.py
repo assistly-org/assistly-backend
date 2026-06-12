@@ -1,9 +1,8 @@
-from fastapi import FastAPI, Depends # <-- Import Depends
-from sqlalchemy.orm import Session
+from fastapi import FastAPI
 from app.presentation.middleware.tenant_middlewares.tenant_middleware import SubdomainTenantMiddleware
-from app.infrastructure.db.database import get_db # <-- Import your DB dependency
 from app.presentation.routers.tenants import tenant_route
 from app.presentation.routers.auth import auth_service
+
 
 app = FastAPI(title="Assistly API")
 
