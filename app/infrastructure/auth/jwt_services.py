@@ -1,6 +1,6 @@
 from datetime import datetime, timedelta
 from typing import Optional, Dict, Any
-from jose import jwt, JWTError
+from jose import jwt
 from app.domain.interfaces.token_service import ITokenService
 
 import os
@@ -12,7 +12,7 @@ REFRESH_TOKEN_EXPIRE_DAYS = int(os.getenv("REFRESH_TOKEN_EXPIRE_DAYS", 7))
 
 
 class JwtService(ITokenService):
-    
+
     @staticmethod
     def create_token(data: dict, expires_delta: timedelta, token_type: str) -> str:
         to_encode = data.copy()
@@ -34,8 +34,5 @@ class JwtService(ITokenService):
 
     @staticmethod
     def decode_token(token: str) -> Optional[Dict[str, Any]]:
-        try:
-            payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-            return payload
-        except JWTError:
-            return None
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        return payload
