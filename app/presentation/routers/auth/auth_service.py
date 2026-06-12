@@ -182,3 +182,41 @@ def logout(
     )
 
     return {"message": "Successfully logged out. Session revoked securely."}
+
+
+
+
+
+# GOOGLE auth
+
+from app.presentation.schemas.auth import (
+    GoogleAuthRequest, GoogleAuthResponse,
+    GoogleSetupRequest, GoogleSetupResponse
+)
+from app.presentation.dependencies.auth_deps import get_google_auth_service
+
+@router.post("/google", response_model=GoogleAuthResponse)
+def google_login(
+    request: GoogleAuthRequest,
+    service = Depends(get_google_auth_service)
+):
+    return service.google_login(data=request)
+
+
+@router.post("/google/setup", response_model=GoogleSetupResponse)
+def google_setup(
+    request: GoogleSetupRequest,
+    response: Response,
+    db: Session = Depends(get_db),
+    service = Depends(get_google_auth_service)
+):
+    result = service.google_setup(data=request, db=db)
+    response.set_cookie(
+        key="refresh_token",
+        value=result.refresh_token,
+        httponly=True,
+        secure=False,
+        samesite="lax",
+        max_age=604800,
+    )
+    return result
