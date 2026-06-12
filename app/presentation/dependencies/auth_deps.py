@@ -84,3 +84,19 @@ def get_refresh_service(db: Session = Depends(get_db)) -> RefreshTokenService:
 def get_logout_service() -> LogoutService:
     cache_service = RedisService()
     return LogoutService(cache_service=cache_service)
+
+
+
+
+from app.infrastructure.auth.google_auth_service import GoogleAuthService as GoogleAuthImpl
+from app.application.use_cases.auth.google_auth import GoogleAuthService
+from app.infrastructure.auth.jwt_services import JwtService
+def get_google_auth_service(db: Session = Depends(get_db)) -> GoogleAuthService:
+    return GoogleAuthService(
+        user_repo=UserRepository(db),
+        tenant_repo=TenantRepository(db),
+        google_service=GoogleAuthImpl(),
+        cache_service=RedisService(),
+        token_service=JwtService(),
+        task_dispatcher=CeleryTaskDispatcher()
+    )
