@@ -1,3 +1,8 @@
+from dotenv import load_dotenv
+
+load_dotenv()
+from fastapi import FastAPI, Depends # <-- Import Depends
+from sqlalchemy.orm import Session
 from fastapi import FastAPI
 from app.presentation.middleware.tenant_middlewares.tenant_middleware import SubdomainTenantMiddleware
 from app.presentation.routers.tenants import tenant_route

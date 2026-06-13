@@ -7,14 +7,28 @@ from app.infrastructure.db.database import get_db
 from app.presentation.schemas.auth import (
     RegisterRequest, RegisterResponse,
     VerifyRequest, VerifyResponse,
-    LoginRequest, LoginResponse, TokenRefreshResponse
+    LoginRequest, LoginResponse, TokenRefreshResponse,
+    VerifyForgotPasswordRequest,
+    VerifyForgotPasswordResponse,
+    ResetPasswordRequest,
+    ResetPasswordResponse,
+    ForgotPasswordRequest,
+    ForgotPasswordResponse,
+    ChangePasswordRequest,
+    ChangePasswordResponse,
 )
 from app.presentation.dependencies.auth_deps import (
     get_register_service,
+    get_verify_forgot_password_service,
     get_verify_service,
     get_login_service,
     get_refresh_service,
-    get_logout_service
+    get_logout_service,
+    get_forgot_password_service,
+    get_verify_forgot_password_service,
+    get_reset_password_service,
+    get_change_password_service
+
 )
 from app.domain.exceptions import (
     ValidationError,
@@ -183,6 +197,75 @@ def logout(
 
     return {"message": "Successfully logged out. Session revoked securely."}
 
+#------- FORGOT PASSWORD ROUTES -------#
+
+@router.post(
+    "/forgot-password",
+    response_model=ForgotPasswordResponse
+)
+def forgot_password(
+    request: ForgotPasswordRequest,
+    service=Depends(get_forgot_password_service)
+):
+    return service.execute(request)
+
+@router.post(
+    "/verify-forgot-password",
+    response_model=VerifyForgotPasswordResponse
+)
+def verify_forgot_password(
+    request: VerifyForgotPasswordRequest,
+    service=Depends(get_verify_forgot_password_service)
+):
+    return service.execute(request)
+
+@router.post(
+    "/reset-password",
+    response_model=ResetPasswordResponse
+)
+def reset_password(
+    request: ResetPasswordRequest,
+    db: Session = Depends(get_db),
+    service=Depends(get_reset_password_service)
+):
+    try:
+        result = service.execute(request)
+
+        db.commit()
+
+        return result
+
+    except Exception as e:
+        db.rollback()
+
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e)
+        )
+        
+#-------- change password route ---------#
+
+from app.presentation.dependencies.current_user import get_current_user
+
+@router.get("/me")
+def me(
+    current_user=Depends(get_current_user)
+):
+    return current_user
+
+@router.post(
+    "/change-password",
+    response_model=ChangePasswordResponse
+)
+def change_password(
+    request: ChangePasswordRequest,
+    current_user=Depends(get_current_user),
+    service=Depends(get_change_password_service)
+):
+    return service.execute(
+        current_user,
+        request
+    )
 
 
 
