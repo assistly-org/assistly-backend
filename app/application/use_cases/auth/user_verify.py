@@ -71,6 +71,7 @@ class VerifyService:
             token_payload = {
                 "sub": str(new_user.id),
                 "email": new_user.email,
+                "role":new_user.role,
                 "tenant_slug": new_tenant.slug,
             }
 
@@ -83,7 +84,8 @@ class VerifyService:
                 "token_type": "bearer",
                 "user": {
                     "id": str(new_user.id),
-                    "email": new_user.email
+                    "email": new_user.email,
+                    "tenant_slug": new_tenant.slug,
                 }
             }
 
