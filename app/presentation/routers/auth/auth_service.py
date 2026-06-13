@@ -1,5 +1,3 @@
-# app/presentation/routers/auth.py
-
 from fastapi import APIRouter, Depends, Response, HTTPException, status, Cookie
 from sqlalchemy.orm import Session
 
@@ -16,6 +14,8 @@ from app.presentation.schemas.auth import (
     ForgotPasswordResponse,
     ChangePasswordRequest,
     ChangePasswordResponse,
+    GoogleAuthRequest, GoogleAuthResponse,
+    GoogleSetupRequest, GoogleSetupResponse
 )
 from app.presentation.dependencies.auth_deps import (
     get_register_service,
@@ -27,7 +27,8 @@ from app.presentation.dependencies.auth_deps import (
     get_forgot_password_service,
     get_verify_forgot_password_service,
     get_reset_password_service,
-    get_change_password_service
+    get_change_password_service,
+    get_google_auth_service
 
 )
 from app.domain.exceptions import (
@@ -43,7 +44,6 @@ from app.domain.exceptions import (
 )
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])
-
 
 @router.post("/register", response_model=RegisterResponse)
 def register(request: RegisterRequest, service=Depends(get_register_service)):
@@ -197,6 +197,8 @@ def logout(
 
     return {"message": "Successfully logged out. Session revoked securely."}
 
+
+
 #------- FORGOT PASSWORD ROUTES -------#
 
 @router.post(
@@ -268,15 +270,7 @@ def change_password(
     )
 
 
-
-
 # GOOGLE auth
-
-from app.presentation.schemas.auth import (
-    GoogleAuthRequest, GoogleAuthResponse,
-    GoogleSetupRequest, GoogleSetupResponse
-)
-from app.presentation.dependencies.auth_deps import get_google_auth_service
 
 @router.post("/google", response_model=GoogleAuthResponse)
 def google_login(
