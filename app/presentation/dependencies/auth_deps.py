@@ -19,6 +19,11 @@ from app.application.use_cases.auth.user_login import LoginService
 from app.application.use_cases.auth.refresh_token import RefreshTokenService
 from app.application.use_cases.auth.user_logout import LogoutService
 
+from app.application.use_cases.auth.forgot_password import ForgotPasswordService
+from app.application.use_cases.auth.verify_forgot_password import VerifyForgotPasswordService
+from app.application.use_cases.auth.reset_password import ResetPasswordService
+from app.application.use_cases.auth.change_password import ChangePasswordService
+
 def get_verify_service(db: Session = Depends(get_db)) -> VerifyService:
     user_repo = UserRepository(db)
     tenant_repo = TenantRepository(db)
@@ -85,3 +90,58 @@ def get_logout_service() -> LogoutService:
     # Notice we don't even need the database session for this! Just Redis.
     cache_service = RedisService()
     return LogoutService(cache_service=cache_service)
+
+
+#------- FORGOT PASSWORD DEPENDENCIES -------#
+
+def get_forgot_password_service(
+    db: Session = Depends(get_db)
+) -> ForgotPasswordService:
+
+    user_repo = UserRepository(db)
+    cache_service = RedisService()
+    task_dispatcher = CeleryTaskDispatcher()
+
+    return ForgotPasswordService(
+        user_repo=user_repo,
+        cache_service=cache_service,
+        task_dispatcher=task_dispatcher
+    )
+    
+    
+def get_verify_forgot_password_service():
+    cache_service = RedisService()
+
+    return VerifyForgotPasswordService(
+        cache_service=cache_service
+    )
+    
+
+
+def get_reset_password_service(
+    db: Session = Depends(get_db)
+) -> ResetPasswordService:
+
+    user_repo = UserRepository(db)
+    hash_service = BcryptHashService()
+    cache_service = RedisService()
+
+    return ResetPasswordService(
+        user_repo=user_repo,
+        hash_service=hash_service,
+        cache_service=cache_service
+    )
+    
+    
+#-------change password dependency-------#
+
+def get_change_password_service(
+    db: Session = Depends(get_db)
+):
+    user_repo = UserRepository(db)
+    hash_service = BcryptHashService()
+
+    return ChangePasswordService(
+        user_repo=user_repo,
+        hash_service=hash_service
+    )

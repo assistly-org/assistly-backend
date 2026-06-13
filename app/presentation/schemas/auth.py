@@ -38,3 +38,43 @@ class LoginResponse(BaseModel):
 class TokenRefreshResponse(BaseModel):
     access_token: str
     token_type: str = "bearer"
+    
+    
+    
+#------- FORGOT PASSWORD -------#
+
+class ForgotPasswordRequest(BaseModel):
+    email: EmailStr
+
+class ForgotPasswordResponse(BaseModel):
+    message: str
+
+
+class VerifyForgotPasswordRequest(BaseModel):
+    email: EmailStr
+    otp_code: str
+
+
+
+
+class VerifyForgotPasswordResponse(BaseModel):
+    message: str
+
+
+class ResetPasswordRequest(BaseModel):
+    email: EmailStr
+    new_password: str
+
+class ResetPasswordResponse(BaseModel):
+    message: str
+    
+    
+#--------change password ---------#
+
+class ChangePasswordRequest(BaseModel):
+    current_password: str
+    new_password: str
+
+
+class ChangePasswordResponse(BaseModel):
+    message: str
