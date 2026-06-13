@@ -142,7 +142,7 @@ def get_change_password_service(
 
     return ChangePasswordService(
         user_repo=user_repo,
-        hash_service=hash_service
+        hash_service=hash_service)
 
 
 from app.infrastructure.auth.google_auth_service import GoogleAuthService as GoogleAuthImpl

@@ -1,4 +1,3 @@
-# app/application/use_cases/auth/google_auth.py
 import json
 import uuid
 import logging
