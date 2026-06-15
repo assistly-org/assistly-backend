@@ -24,6 +24,8 @@ from app.application.use_cases.auth.verify_forgot_password import VerifyForgotPa
 from app.application.use_cases.auth.reset_password import ResetPasswordService
 from app.application.use_cases.auth.change_password import ChangePasswordService
 
+from app.application.use_cases.auth.edit_profile import EditProfileService
+
 def get_verify_service(db: Session = Depends(get_db)) -> VerifyService:
     user_repo = UserRepository(db)
     tenant_repo = TenantRepository(db)
@@ -144,4 +146,16 @@ def get_change_password_service(
     return ChangePasswordService(
         user_repo=user_repo,
         hash_service=hash_service
+    )
+    
+
+#------- edit profile dependency -------#
+
+def get_edit_profile_service(
+    db: Session = Depends(get_db)
+):
+    user_repo = UserRepository(db)
+
+    return EditProfileService(
+        user_repo=user_repo
     )

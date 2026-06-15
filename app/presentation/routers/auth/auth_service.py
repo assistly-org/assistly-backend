@@ -266,3 +266,5 @@ def change_password(
         current_user,
         request
     )
+
+#-------- edit profile route ---------#

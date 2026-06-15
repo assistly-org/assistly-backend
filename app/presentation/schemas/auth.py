@@ -78,3 +78,12 @@ class ChangePasswordRequest(BaseModel):
 
 class ChangePasswordResponse(BaseModel):
     message: str
+    
+    
+#------- edit profile -------#
+
+class EditProfileRequest(BaseModel):
+    name: str
+    
+class EditProfileResponse(BaseModel):
+    message: str

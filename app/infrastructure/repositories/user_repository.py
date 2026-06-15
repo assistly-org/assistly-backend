@@ -19,6 +19,7 @@ class UserRepository(IUserRepository):
         db_user = ORMUser(
             id=user.id,
             email=user.email,
+            name=user.name,
             password_hash=user.password_hash,
             # Add any other fields you have on your user model here (e.g., is_active=user.is_active)
         )
@@ -42,6 +43,7 @@ class UserRepository(IUserRepository):
         return ORMUser(
             id=db_user.id,
             email=db_user.email,
+            name=db_user.name,
             password_hash=db_user.password_hash,
             is_active=db_user.is_active,
             role=db_user.role 
@@ -54,6 +56,7 @@ class UserRepository(IUserRepository):
             return DomainUser(
                 id=str(db_user.id), 
                 email=db_user.email, 
+                name=db_user.name,
                 password_hash=db_user.password_hash
             )
         return None
@@ -64,6 +67,7 @@ class UserRepository(IUserRepository):
         if db_user:
             # Update the ORM model with the new Domain data
             db_user.email = user.email
+            db_user.name = user.name
             db_user.password_hash = user.password_hash
             self.db.flush()
             self.db.refresh(db_user)

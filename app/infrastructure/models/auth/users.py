@@ -32,6 +32,8 @@ class User(Base):
     # ------------------------
 
     email: Mapped[str] = mapped_column(String(255), unique=True, nullable=False)
+    
+    name: Mapped[Optional[str]] = mapped_column(String(255),nullable=True)
 
     # OAuth Integration Fields
     auth_provider: Mapped[str] = mapped_column(String(50), default="local", nullable=False)
