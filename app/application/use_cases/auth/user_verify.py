@@ -4,19 +4,21 @@ from app.domain.entities.user import User
 from app.domain.entities.tenant import Tenant
 from app.presentation.schemas.auth import VerifyRequest, VerifyResponse
 from app.domain.exceptions import RegistrationExpiredError, InvalidOTPError
+from sqlalchemy.orm import Session
 
 logger = logging.getLogger("assistly")
-
 
 class VerifyService:
     def __init__(
         self,
+        db: Session,
         user_repo,
         tenant_repo,
         cache_service,
         token_service,
         task_dispatcher  # ⚡ Inject the Celery abstractor here
     ):
+        self.db = db
         self.user_repo = user_repo
         self.tenant_repo = tenant_repo
         self.cache_service = cache_service
@@ -60,18 +62,20 @@ class VerifyService:
             )
             self.tenant_repo.create_tenant(new_tenant)
 
-            # 3. Dispatch tenant workspace creation via Interface
-            # ⚡ The service doesn't know this uses Celery!
+            # 3. Dispatch tenant workspace creation via Celery
             self.task_dispatcher.dispatch_tenant_creation(new_tenant.slug)
 
             # 4. Delete Redis key
             self.cache_service.delete(f"registration:{data.email}")
 
-            # 5. Generate tokens
+            # ⚡ 5. COMMIT THE TRANSACTION HERE!
+            self.db.commit()
+
+            # 6. Generate tokens
             token_payload = {
                 "sub": str(new_user.id),
                 "email": new_user.email,
-                "role":new_user.role,
+                "role": new_user.role,
                 "tenant_slug": new_tenant.slug,
             }
 
@@ -90,7 +94,7 @@ class VerifyService:
             }
 
         except Exception as e:
-            logger.error(
-                f"Verification pipeline crashed for {data.email}", exc_info=True)
-            # Raise a generic Domain Error that the Router will catch
+            # ⚡ ROLLBACK IF ANYTHING FAILS!
+            self.db.rollback()
+            logger.error(f"Verification pipeline crashed for {data.email}", exc_info=True)
             raise Exception("Workspace setup failed. Please try again.")

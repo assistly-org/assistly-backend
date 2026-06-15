@@ -22,6 +22,10 @@ from app.application.use_cases.auth.verify_forgot_password import VerifyForgotPa
 from app.application.use_cases.auth.reset_password import ResetPasswordService
 from app.application.use_cases.auth.change_password import ChangePasswordService
 
+from app.infrastructure.auth.google_auth_service import GoogleAuthService as GoogleAuthImpl
+from app.application.use_cases.auth.google_auth import GoogleAuthService
+from app.infrastructure.auth.jwt_services import JwtService
+
 def get_verify_service(db: Session = Depends(get_db)) -> VerifyService:
     user_repo = UserRepository(db)
     tenant_repo = TenantRepository(db)
@@ -30,6 +34,7 @@ def get_verify_service(db: Session = Depends(get_db)) -> VerifyService:
     task_dispatcher = CeleryTaskDispatcher()
 
     return VerifyService(
+        db=db,
         user_repo=user_repo,
         tenant_repo=tenant_repo,
         cache_service=cache_service,
@@ -126,6 +131,7 @@ def get_reset_password_service(
     cache_service = RedisService()
 
     return ResetPasswordService(
+        db=db,
         user_repo=user_repo,
         hash_service=hash_service,
         cache_service=cache_service
@@ -145,9 +151,6 @@ def get_change_password_service(
         hash_service=hash_service)
 
 
-from app.infrastructure.auth.google_auth_service import GoogleAuthService as GoogleAuthImpl
-from app.application.use_cases.auth.google_auth import GoogleAuthService
-from app.infrastructure.auth.jwt_services import JwtService
 def get_google_auth_service(db: Session = Depends(get_db)) -> GoogleAuthService:
     return GoogleAuthService(
         user_repo=UserRepository(db),

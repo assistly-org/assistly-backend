@@ -2,6 +2,7 @@ import os
 from dotenv import load_dotenv
 from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker, DeclarativeBase
+from sqlalchemy.pool import NullPool
 from fastapi import HTTPException
 from app.infrastructure.logger import logger 
 from app.infrastructure.db.tenant_context import get_tenant_schema
@@ -17,7 +18,8 @@ if not SQLALCHEMY_DATABASE_URL:
 try:
     engine = create_engine(
         SQLALCHEMY_DATABASE_URL,
-        pool_pre_ping=True
+        pool_pre_ping=False,
+        poolclass=NullPool
     )
     logger.info("Database engine configured successfully.")
 except Exception as e:
@@ -47,30 +49,21 @@ def get_db():
     try:
         target_schema = get_tenant_schema()
         
-        # 1. Check if we ALREADY validated this tenant in memory
         if target_schema not in VALIDATED_SCHEMAS:
-            
-            # 2. Use pg_namespace (10x faster than information_schema)
             schema_exists = db.execute(
                 text("SELECT 1 FROM pg_namespace WHERE nspname = :schema"),
                 {"schema": target_schema}
             ).scalar()
 
-            # 3. Block if fake
             if not schema_exists:
                 logger.warning(f"Blocked request to non-existent tenant: {target_schema}")
                 raise HTTPException(status_code=404, detail="Tenant workspace not found.")
             
-            # 4. Cache it
             VALIDATED_SCHEMAS.add(target_schema)
-            logger.info(f"⚡ Cached valid tenant schema in memory: {target_schema}")
+            logger.info(f"⚡ Cached valid tenant schema: {target_schema}")
             
-        # 5. Switch schema safely
-        db.execute(text(f"SET search_path TO {target_schema}"))
-             
+        db.execute(text(f"SET LOCAL search_path TO {target_schema}"))
         yield db
         
     finally:
-        # ⚡ CRITICAL FIX: Clean the connection before giving it back to the pool
-        db.execute(text("RESET search_path")) 
         db.close()
