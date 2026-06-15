@@ -85,6 +85,34 @@ class ChangePasswordRequest(BaseModel):
 
 class ChangePasswordResponse(BaseModel):
     message: str
+    
+    
+#------- edit profile -------#
+
+class EditProfileRequest(BaseModel):
+    name: str
+    
+class EditProfileResponse(BaseModel):
+    message: str
+
+class RequestEmailChangeRequest(BaseModel):
+    new_email: EmailStr
+
+
+class RequestEmailChangeResponse(BaseModel):
+    message: str
+
+
+class VerifyEmailChangeRequest(BaseModel):
+    new_email: EmailStr
+    otp_code: str
+
+
+class VerifyEmailChangeResponse(BaseModel):
+    message: str
+
+
+
 
 
 # --- GOOOGLE AUTH ---

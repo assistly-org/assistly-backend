@@ -32,11 +32,16 @@ class User(Base):
     # ------------------------
 
     email: Mapped[str] = mapped_column(String(255), unique=True, nullable=False)
+    
+    name: Mapped[Optional[str]] = mapped_column(String(255),nullable=True)
 
     # OAuth Integration Fields
     auth_provider: Mapped[str] = mapped_column(String(50), default="local", nullable=False)
     oauth_id: Mapped[Optional[str]] = mapped_column(String(255), unique=True, nullable=True)
     avatar_url: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    phone: Mapped[Optional[str]] = mapped_column(String(20), nullable=True)
+    bio: Mapped[Optional[str]] = mapped_column(String(500), nullable=True)
+    timezone: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
     password_hash: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
 
     role: Mapped[str] = mapped_column(String(50), default="tenant_admin", nullable=False)
