@@ -3,9 +3,7 @@ from starlette.middleware.base import BaseHTTPMiddleware
 from app.infrastructure.db.tenant_context import set_tenant_schema
 from app.infrastructure.logger import logger
 
-
 AUTH_SCHEMA = "assistly_auth"
-
 
 class SubdomainTenantMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next):

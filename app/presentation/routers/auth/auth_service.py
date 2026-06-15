@@ -1,5 +1,3 @@
-# app/presentation/routers/auth.py
-
 from fastapi import APIRouter, Depends, Response, HTTPException, status, Cookie
 from sqlalchemy.orm import Session
 
@@ -16,6 +14,14 @@ from app.presentation.schemas.auth import (
     ForgotPasswordResponse,
     ChangePasswordRequest,
     ChangePasswordResponse,
+    GoogleAuthRequest, GoogleAuthResponse,
+    GoogleSetupRequest, GoogleSetupResponse,
+    EditProfileRequest,
+    EditProfileResponse,
+    RequestEmailChangeRequest,
+    RequestEmailChangeResponse,
+    VerifyEmailChangeRequest,
+    VerifyEmailChangeResponse,
 )
 from app.presentation.dependencies.auth_deps import (
     get_register_service,
@@ -27,8 +33,11 @@ from app.presentation.dependencies.auth_deps import (
     get_forgot_password_service,
     get_verify_forgot_password_service,
     get_reset_password_service,
-    get_change_password_service
-
+    get_change_password_service,
+    get_google_auth_service,
+    get_edit_profile_service,
+    get_request_email_change_service,
+    get_verify_email_change_service,
 )
 from app.domain.exceptions import (
     ValidationError,
@@ -43,7 +52,6 @@ from app.domain.exceptions import (
 )
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])
-
 
 @router.post("/register", response_model=RegisterResponse)
 def register(request: RegisterRequest, service=Depends(get_register_service)):
@@ -197,6 +205,8 @@ def logout(
 
     return {"message": "Successfully logged out. Session revoked securely."}
 
+
+
 #------- FORGOT PASSWORD ROUTES -------#
 
 @router.post(
@@ -268,3 +278,101 @@ def change_password(
     )
 
 #-------- edit profile route ---------#
+@router.put(
+    "/edit-profile",
+    response_model=EditProfileResponse
+)
+def edit_profile(
+    request: EditProfileRequest,
+    current_user=Depends(get_current_user),
+    db: Session = Depends(get_db),
+    service=Depends(get_edit_profile_service)
+):
+    try:
+        result = service.execute(
+            current_user,
+            request
+        )
+
+        db.commit()
+
+        return result
+
+    except Exception as e:
+        db.rollback()
+
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e)
+        )
+# GOOGLE auth
+
+@router.post("/google", response_model=GoogleAuthResponse)
+def google_login(
+    request: GoogleAuthRequest,
+    service = Depends(get_google_auth_service)
+):
+    return service.google_login(data=request)
+
+
+@router.post("/google/setup", response_model=GoogleSetupResponse)
+def google_setup(
+    request: GoogleSetupRequest,
+    response: Response,
+    db: Session = Depends(get_db),
+    service = Depends(get_google_auth_service)
+):
+    result = service.google_setup(data=request, db=db)
+    response.set_cookie(
+        key="refresh_token",
+        value=result.refresh_token,
+        httponly=True,
+        secure=False,
+        samesite="lax",
+        max_age=604800,
+    )
+    return result
+
+#-------- request email change route ---------#
+@router.post(
+    "/request-email-change",
+    response_model=RequestEmailChangeResponse
+)
+def request_email_change(
+    request: RequestEmailChangeRequest,
+    current_user=Depends(get_current_user),
+    service=Depends(get_request_email_change_service)
+):
+    return service.execute(
+        current_user,
+        request
+    )
+    
+#-------- verify email change route ---------#
+@router.post(
+    "/verify-email-change",
+    response_model=VerifyEmailChangeResponse
+)
+def verify_email_change(
+    request: VerifyEmailChangeRequest,
+    current_user=Depends(get_current_user),
+    db: Session = Depends(get_db),
+    service=Depends(get_verify_email_change_service)
+):
+    try:
+        result = service.execute(
+            current_user,
+            request
+        )
+
+        db.commit()
+
+        return result
+
+    except Exception as e:
+        db.rollback()
+
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e)
+        )

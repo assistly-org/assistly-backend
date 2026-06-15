@@ -20,6 +20,10 @@ class UserRepository(IUserRepository):
             id=user.id,
             email=user.email,
             name=user.name,
+            phone=user.phone,
+            avatar_url=user.avatar_url,
+            bio=user.bio,
+            timezone=user.timezone,
             password_hash=user.password_hash,
             # Add any other fields you have on your user model here (e.g., is_active=user.is_active)
         )
@@ -44,9 +48,13 @@ class UserRepository(IUserRepository):
             id=db_user.id,
             email=db_user.email,
             name=db_user.name,
+            phone=db_user.phone,
+            avatar_url=db_user.avatar_url,
+            bio=db_user.bio,
+            timezone=db_user.timezone,
             password_hash=db_user.password_hash,
             is_active=db_user.is_active,
-            role=db_user.role 
+            role=db_user.role
         )
 
 
@@ -57,6 +65,11 @@ class UserRepository(IUserRepository):
                 id=str(db_user.id), 
                 email=db_user.email, 
                 name=db_user.name,
+                phone=db_user.phone,
+                avatar_url=db_user.avatar_url,
+                bio=db_user.bio,
+                timezone=db_user.timezone,
+
                 password_hash=db_user.password_hash
             )
         return None
@@ -68,6 +81,10 @@ class UserRepository(IUserRepository):
             # Update the ORM model with the new Domain data
             db_user.email = user.email
             db_user.name = user.name
+            db_user.phone = user.phone
+            db_user.avatar_url = user.avatar_url
+            db_user.bio = user.bio
+            db_user.timezone = user.timezone
             db_user.password_hash = user.password_hash
             self.db.flush()
             self.db.refresh(db_user)

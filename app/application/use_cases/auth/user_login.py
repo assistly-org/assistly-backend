@@ -48,7 +48,8 @@ class LoginService:
         token_payload = {
             "sub": str(user.id),
             "email": user.email,
-            "tenant_slug": tenant_slug  # ⚡ 6. Add it to the JWT payload!
+            "role":user.role,
+            "tenant_slug": tenant_slug
         }
 
         access_token = self.token_service.create_access_token(data=token_payload)
