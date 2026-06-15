@@ -1,14 +1,15 @@
 import random
 import json
 import logging
+import re
+
 from app.presentation.schemas.auth import RegisterRequest, RegisterResponse
 from app.domain.exceptions import ValidationError
 from app.domain.exceptions import UserAlreadyExistsError, SubdomainTakenError
 
 logger = logging.getLogger("assistly")
 
-import re
-
+# --- BULLETPROOF VALIDATORS ---
 
 def validate_password(password: str) -> None:
     if len(password) < 8:
@@ -22,6 +23,25 @@ def validate_email(email: str) -> None:
     if not re.match(r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$", email):
         raise ValidationError("Invalid email address")
 
+def validate_subdomain(subdomain: str) -> None:
+    # 1. Check basic length and characters (lowercase, numbers, and hyphens only)
+    # Cannot start or end with a hyphen.
+    if not re.match(r"^[a-z0-9](?:[a-z0-9\-]{1,61}[a-z0-9])?$", subdomain):
+        raise ValidationError(
+            "Subdomain must be 3-63 characters, use only lowercase letters, numbers, or hyphens, and cannot start/end with a hyphen."
+        )
+    
+    # 2. Block reserved system subdomains so users can't hijack your API!
+    reserved_subdomains = {"www", "api", "admin", "mail", "public", "support", "app", "tenant_template"}
+    if subdomain in reserved_subdomains:
+        raise ValidationError("This subdomain is reserved and cannot be registered.")
+
+def validate_company_name(name: str) -> None:
+    if not name or len(name.strip()) < 2:
+        raise ValidationError("Company name must be at least 2 characters long")
+    if len(name) > 100:
+        raise ValidationError("Company name is too long (maximum 100 characters)")
+
 
 class RegisterService:
     def __init__(
@@ -29,9 +49,9 @@ class RegisterService:
         user_repo, 
         tenant_repo, 
         hash_service, 
-        email_service, # Note: if email_service was handling the dispatch, use that, otherwise use task_dispatcher
+        email_service, 
         cache_service,
-        task_dispatcher # ⚡ Inject the Celery abstractor
+        task_dispatcher 
     ):
         self.user_repo = user_repo
         self.tenant_repo = tenant_repo
@@ -41,9 +61,11 @@ class RegisterService:
         self.task_dispatcher = task_dispatcher
 
     def register(self, data: RegisterRequest) -> RegisterResponse:
-        # --- PRE-FLIGHT CHECKS ---
-        validate_password(data.password) # Now throws ValidationError
-        validate_email(data.email)       # Now throws ValidationError
+        # --- PRE-FLIGHT CHECKS & VALIDATION ---
+        validate_password(data.password) 
+        validate_email(data.email)       
+        validate_subdomain(data.subdomain)   # ⚡ New Subdomain Protection!
+        validate_company_name(data.company_name) # ⚡ New Company Name Protection!
         
         user = self.user_repo.get_by_email(data.email)
 
@@ -73,7 +95,6 @@ class RegisterService:
         self.cache_service.set(f"registration:{data.email}", 300, payload)
 
         # --- DISPATCH OTP EMAIL VIA INTERFACE ---
-        # ⚡ No more hardcoded Celery imports!
         self.task_dispatcher.dispatch_otp_email(data.email, otp_code)
 
         logger.info(f"Registration payload cached for {data.email}. OTP dispatched.")

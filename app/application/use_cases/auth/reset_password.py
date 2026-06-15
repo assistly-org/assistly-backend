@@ -1,15 +1,18 @@
 import logging
+from sqlalchemy.orm import Session # ⚡ Make sure to import Session
+from app.domain.exceptions import ValidationError # Or whatever exceptions you are using
 
 logger = logging.getLogger("assistly")
-
 
 class ResetPasswordService:
     def __init__(
         self,
+        db: Session, # ⚡ Inject the DB here!
         user_repo,
         hash_service,
         cache_service
     ):
+        self.db = db # ⚡ Save it to the class
         self.user_repo = user_repo
         self.hash_service = hash_service
         self.cache_service = cache_service
@@ -58,15 +61,20 @@ class ResetPasswordService:
                 f"forgot_password_verified:{data.email}"
             )
 
+            # ⚡ COMMIT THE TRANSACTION HERE!
+            self.db.commit()
+
             logger.info("STEP 6: Success")
 
             return {
                 "message": "Password reset successful."
             }
 
-        except Exception:
+        except Exception as e:
+            # ⚡ ROLLBACK IF ANYTHING FAILS!
+            self.db.rollback()
+            
             logger.exception(
                 f"Password reset failed for {data.email}"
             )
-            raise
-            
+            raise e

@@ -19,6 +19,8 @@ class Address(Base):
         primary_key=True, 
         default=lambda: f"adr-{uuid.uuid4().hex[:16]}"
     )
+
+
     
     # Link to the user table
     user_id: Mapped[str] = mapped_column(
@@ -40,6 +42,13 @@ class Address(Base):
         server_default=text("CURRENT_TIMESTAMP"),
         nullable=False
     )
+
+    deleted_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        server_default=text("CURRENT_TIMESTAMP"),
+        nullable=False
+    )
+
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         server_default=text("CURRENT_TIMESTAMP"),

@@ -19,8 +19,6 @@ class ForgotPasswordService:
     def execute(self, data):
 
         try:
-            logger.info("STEP 1: Finding user")
-
             user = self.user_repo.get_by_email(data.email)
 
             if not user:
@@ -39,10 +37,8 @@ class ForgotPasswordService:
             raise
 
         try:
-            logger.info("STEP 2: Generating OTP")
-
             otp_code = str(random.randint(100000, 999999))
-            print(f"Forgot Password OTP: {otp_code}")
+            logger.info(f"Forgot Password OTP: {otp_code} 🔑")
 
         except Exception as e:
             logger.error(
@@ -52,8 +48,6 @@ class ForgotPasswordService:
             raise
 
         try:
-            logger.info("STEP 3: Creating payload")
-
             payload = json.dumps({
                 "email": data.email,
                 "otp": otp_code
@@ -67,8 +61,6 @@ class ForgotPasswordService:
             raise
 
         try:
-            logger.info("STEP 4: Saving OTP in Redis")
-
             self.cache_service.set(
                 f"forgot_password:{data.email}",
                 300,
@@ -83,8 +75,6 @@ class ForgotPasswordService:
             raise
 
         try:
-            logger.info("STEP 5: Sending OTP email")
-
             self.task_dispatcher.dispatch_otp_email(
                 data.email,
                 otp_code

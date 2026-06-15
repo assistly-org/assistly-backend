@@ -1,3 +1,4 @@
+from app.presentation.dependencies.current_user import get_current_user
 from fastapi import APIRouter, Depends, Response, HTTPException, status, Cookie
 from sqlalchemy.orm import Session
 
@@ -53,6 +54,7 @@ from app.domain.exceptions import (
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])
 
+
 @router.post("/register", response_model=RegisterResponse)
 def register(request: RegisterRequest, service=Depends(get_register_service)):
     try:
@@ -73,16 +75,13 @@ def register(request: RegisterRequest, service=Depends(get_register_service)):
 def verify(
     request: VerifyRequest,
     response: Response,
-    db: Session = Depends(get_db),
+    # ⚡ DB is gone! Only the service is injected now.
     service=Depends(get_verify_service),
 ):
     try:
-        # 1. result is now a dictionary
+        # The service runs the logic, commits the DB, or raises an error
         result = service.verify_otp(data=request)
 
-        db.commit()
-
-        # 2. ⚡ Use bracket notation here!
         response.set_cookie(
             key="refresh_token",
             value=result["refresh_token"],
@@ -92,19 +91,16 @@ def verify(
             max_age=604800,
         )
 
-        # 3. FastAPI will strip the refresh_token based on VerifyResponse
         return result
 
     except RegistrationExpiredError as e:
-        db.rollback()
+        # ⚡ No more db.rollback() needed here!
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
     except InvalidOTPError as e:
-        db.rollback()
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED, detail=str(e))
     except Exception as e:
-        db.rollback()
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                             detail="Workspace setup failed. Please try again.")
 
@@ -206,8 +202,7 @@ def logout(
     return {"message": "Successfully logged out. Session revoked securely."}
 
 
-
-#------- FORGOT PASSWORD ROUTES -------#
+# ------- FORGOT PASSWORD ROUTES -------#
 
 @router.post(
     "/forgot-password",
@@ -219,6 +214,7 @@ def forgot_password(
 ):
     return service.execute(request)
 
+
 @router.post(
     "/verify-forgot-password",
     response_model=VerifyForgotPasswordResponse
@@ -229,39 +225,32 @@ def verify_forgot_password(
 ):
     return service.execute(request)
 
-@router.post(
-    "/reset-password",
-    response_model=ResetPasswordResponse
-)
+
+@router.post("/reset-password", response_model=ResetPasswordResponse)
 def reset_password(
     request: ResetPasswordRequest,
-    db: Session = Depends(get_db),
+    # ⚡ DB is gone!
     service=Depends(get_reset_password_service)
 ):
     try:
-        result = service.execute(request)
-
-        db.commit()
-
-        return result
+        # The service handles the try/except, commit, and rollback internally
+        return service.execute(request)
 
     except Exception as e:
-        db.rollback()
-
+        # ⚡ No more db.rollback() needed here!
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=str(e)
-        )
-        
-#-------- change password route ---------#
+            status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
 
-from app.presentation.dependencies.current_user import get_current_user
+
+# -------- change password route ---------#
+
 
 @router.get("/me")
 def me(
     current_user=Depends(get_current_user)
 ):
     return current_user
+
 
 @router.post(
     "/change-password",
@@ -310,7 +299,7 @@ def edit_profile(
 @router.post("/google", response_model=GoogleAuthResponse)
 def google_login(
     request: GoogleAuthRequest,
-    service = Depends(get_google_auth_service)
+    service=Depends(get_google_auth_service)
 ):
     return service.google_login(data=request)
 
@@ -320,7 +309,7 @@ def google_setup(
     request: GoogleSetupRequest,
     response: Response,
     db: Session = Depends(get_db),
-    service = Depends(get_google_auth_service)
+    service=Depends(get_google_auth_service)
 ):
     result = service.google_setup(data=request, db=db)
     response.set_cookie(
