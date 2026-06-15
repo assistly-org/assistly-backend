@@ -22,6 +22,11 @@ from app.application.use_cases.auth.verify_forgot_password import VerifyForgotPa
 from app.application.use_cases.auth.reset_password import ResetPasswordService
 from app.application.use_cases.auth.change_password import ChangePasswordService
 
+from app.application.use_cases.auth.edit_profile import EditProfileService
+
+from app.application.use_cases.auth.request_email_change import RequestEmailChangeService
+from app.application.use_cases.auth.verify_email_change import VerifyEmailChangeService
+
 def get_verify_service(db: Session = Depends(get_db)) -> VerifyService:
     user_repo = UserRepository(db)
     tenant_repo = TenantRepository(db)
@@ -142,8 +147,22 @@ def get_change_password_service(
 
     return ChangePasswordService(
         user_repo=user_repo,
-        hash_service=hash_service)
+        hash_service=hash_service
+    )
+    
 
+#------- edit profile dependency -------#
+
+def get_edit_profile_service(
+    db: Session = Depends(get_db)
+):
+    user_repo = UserRepository(db)
+
+    return EditProfileService(
+        user_repo=user_repo
+    )
+
+#------- google auth dependency -------#
 
 from app.infrastructure.auth.google_auth_service import GoogleAuthService as GoogleAuthImpl
 from app.application.use_cases.auth.google_auth import GoogleAuthService
@@ -156,4 +175,31 @@ def get_google_auth_service(db: Session = Depends(get_db)) -> GoogleAuthService:
         cache_service=RedisService(),
         token_service=JwtService(),
         task_dispatcher=CeleryTaskDispatcher()
+    )
+    
+#-----emil change dependencies-----#
+
+def get_request_email_change_service(
+    db: Session = Depends(get_db)
+):
+    user_repo = UserRepository(db)
+    cache_service = RedisService()
+    task_dispatcher = CeleryTaskDispatcher()
+
+    return RequestEmailChangeService(
+        user_repo=user_repo,
+        cache_service=cache_service,
+        task_dispatcher=task_dispatcher
+    )
+
+
+def get_verify_email_change_service(
+    db: Session = Depends(get_db)
+):
+    user_repo = UserRepository(db)
+    cache_service = RedisService()
+
+    return VerifyEmailChangeService(
+        user_repo=user_repo,
+        cache_service=cache_service
     )

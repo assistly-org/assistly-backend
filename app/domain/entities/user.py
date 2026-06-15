@@ -6,6 +6,13 @@ from typing import Optional
 class User:
     email: str
     password_hash: str
+
+    name: Optional[str] = None
+    phone: Optional[str] = None
+    avatar_url: Optional[str] = None
+    bio: Optional[str] = None
+    timezone: Optional[str] = None
+
     auth_provider: str = "local"
     id: Optional[int] = None
     is_active: bool = True
