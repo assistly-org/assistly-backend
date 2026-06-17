@@ -1,6 +1,6 @@
 import logging
 from sqlalchemy.orm import Session # ⚡ Make sure to import Session
-from app.domain.exceptions import ValidationError # Or whatever exceptions you are using
+
 
 logger = logging.getLogger("assistly")
 
