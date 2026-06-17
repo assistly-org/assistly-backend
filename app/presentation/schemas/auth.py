@@ -90,11 +90,23 @@ class ChangePasswordResponse(BaseModel):
 #------- edit profile -------#
 
 class EditProfileRequest(BaseModel):
-    name: str
+    name: str | None = None
+    phone: str | None = None
+    avatar_url: str | None = None
+    bio: str | None = None
+    timezone: str | None = None
     
 class EditProfileResponse(BaseModel):
     message: str
+    name: str | None = None
+    email: EmailStr
+    phone: str | None = None
+    avatar_url: str | None = None
+    bio: str | None = None
+    timezone: str | None = None
 
+    class Config:
+        from_attributes = True
 class RequestEmailChangeRequest(BaseModel):
     new_email: EmailStr
 
