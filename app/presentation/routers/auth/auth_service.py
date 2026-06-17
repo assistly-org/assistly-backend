@@ -23,6 +23,7 @@ from app.presentation.schemas.auth import (
     RequestEmailChangeResponse,
     VerifyEmailChangeRequest,
     VerifyEmailChangeResponse,
+    
 )
 from app.presentation.dependencies.auth_deps import (
     get_register_service,
@@ -245,12 +246,14 @@ def reset_password(
 # -------- change password route ---------#
 
 
-@router.get("/me")
-def me(
+@router.get(
+    "/profile",
+    response_model=EditProfileResponse
+)
+def profile(
     current_user=Depends(get_current_user)
 ):
     return current_user
-
 
 @router.post(
     "/change-password",
@@ -267,7 +270,7 @@ def change_password(
     )
 
 #-------- edit profile route ---------#
-@router.put(
+@router.patch(
     "/edit-profile",
     response_model=EditProfileResponse
 )
