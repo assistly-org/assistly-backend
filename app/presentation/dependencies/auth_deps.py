@@ -32,18 +32,15 @@ from app.application.use_cases.auth.verify_email_change import VerifyEmailChange
 
 def get_verify_service(db: Session = Depends(get_db)) -> VerifyService:
     user_repo = UserRepository(db)
-    tenant_repo = TenantRepository(db)
     cache_service = RedisService()
     token_service = JwtService()
-    task_dispatcher = CeleryTaskDispatcher()
+    
 
     return VerifyService(
         db=db,
         user_repo=user_repo,
-        tenant_repo=tenant_repo,
         cache_service=cache_service,
         token_service=token_service,
-        task_dispatcher=task_dispatcher, 
     )
 
 
@@ -70,13 +67,11 @@ def get_login_service(db: Session = Depends(get_db)) -> LoginService:
     Builds the LoginService so the Router doesn't have to.
     """
     user_repo = UserRepository(db)
-    tenant_repo = TenantRepository(db)
     hash_service = BcryptHashService() 
     token_service = JwtService() 
 
     return LoginService(
         user_repo=user_repo, 
-        tenant_repo = tenant_repo,
         hash_service=hash_service, 
         token_service=token_service
 
@@ -171,12 +166,10 @@ def get_edit_profile_service(
 
 def get_google_auth_service(db: Session = Depends(get_db)) -> GoogleAuthService:
     return GoogleAuthService(
+        db=db,
         user_repo=UserRepository(db),
-        tenant_repo=TenantRepository(db),
         google_service=GoogleAuthImpl(),
-        cache_service=RedisService(),
         token_service=JwtService(),
-        task_dispatcher=CeleryTaskDispatcher()
     )
     
 #-----emil change dependencies-----#

@@ -5,7 +5,7 @@ import re
 
 from app.presentation.schemas.auth import RegisterRequest, RegisterResponse
 from app.domain.exceptions import ValidationError
-from app.domain.exceptions import UserAlreadyExistsError, SubdomainTakenError
+from app.domain.exceptions import UserAlreadyExistsError
 
 logger = logging.getLogger("assistly")
 
@@ -23,24 +23,6 @@ def validate_email(email: str) -> None:
     if not re.match(r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$", email):
         raise ValidationError("Invalid email address")
 
-def validate_subdomain(subdomain: str) -> None:
-    # 1. Check basic length and characters (lowercase, numbers, and hyphens only)
-    # Cannot start or end with a hyphen.
-    if not re.match(r"^[a-z0-9](?:[a-z0-9\-]{1,61}[a-z0-9])?$", subdomain):
-        raise ValidationError(
-            "Subdomain must be 3-63 characters, use only lowercase letters, numbers, or hyphens, and cannot start/end with a hyphen."
-        )
-    
-    # 2. Block reserved system subdomains so users can't hijack your API!
-    reserved_subdomains = {"www", "api", "admin", "mail", "public", "support", "app", "tenant_template"}
-    if subdomain in reserved_subdomains:
-        raise ValidationError("This subdomain is reserved and cannot be registered.")
-
-def validate_company_name(name: str) -> None:
-    if not name or len(name.strip()) < 2:
-        raise ValidationError("Company name must be at least 2 characters long")
-    if len(name) > 100:
-        raise ValidationError("Company name is too long (maximum 100 characters)")
 
 
 class RegisterService:
@@ -64,8 +46,7 @@ class RegisterService:
         # --- PRE-FLIGHT CHECKS & VALIDATION ---
         validate_password(data.password) 
         validate_email(data.email)       
-        validate_subdomain(data.subdomain)   # ⚡ New Subdomain Protection!
-        validate_company_name(data.company_name) # ⚡ New Company Name Protection!
+       
         
         user = self.user_repo.get_by_email(data.email)
 
@@ -75,8 +56,6 @@ class RegisterService:
                 raise UserAlreadyExistsError("Account exists but is unverified. Please request a new OTP.")
             raise UserAlreadyExistsError("Email already registered")
 
-        if self.tenant_repo.get_by_slug(data.subdomain):
-            raise SubdomainTakenError("Subdomain already taken")
 
         # --- PREPARE PAYLOAD ---
         hashed_password = self.hash_service.hash_password(data.password)
@@ -86,8 +65,8 @@ class RegisterService:
         payload = json.dumps({
             "email": data.email,
             "password_hash": hashed_password,
-            "company_name": data.company_name,
-            "subdomain": data.subdomain,
+            "name": data.name,
+            "phone": data.phone,
             "otp": otp_code,
         })
 

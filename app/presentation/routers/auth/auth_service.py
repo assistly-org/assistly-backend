@@ -16,7 +16,6 @@ from app.presentation.schemas.auth import (
     ChangePasswordRequest,
     ChangePasswordResponse,
     GoogleAuthRequest, GoogleAuthResponse,
-    GoogleSetupRequest, GoogleSetupResponse,
     EditProfileRequest,
     EditProfileResponse,
     RequestEmailChangeRequest,
@@ -89,6 +88,7 @@ def verify(
             secure=False,
             samesite="lax",
             max_age=604800,
+            path="/"
         )
 
         return result
@@ -123,6 +123,7 @@ def login(
             secure=False,  # Set to True in production!
             samesite="lax",
             max_age=604800,
+            path="/"
         )
 
         # 3. Return the dictionary.
@@ -161,6 +162,7 @@ def refresh_token(
             secure=False,  # Set to True in production!
             samesite="lax",
             max_age=604800,
+            path="/"
         )
 
         # 3. Return the new access token to the client
@@ -196,7 +198,8 @@ def logout(
         key="refresh_token",
         secure=False,  # Set to True in production!
         httponly=True,
-        samesite="lax"
+        samesite="lax",
+        path="/"
     )
 
     return {"message": "Successfully logged out. Session revoked securely."}
@@ -266,7 +269,9 @@ def change_password(
         request
     )
 
-#-------- edit profile route ---------#
+# -------- edit profile route ---------#
+
+
 @router.put(
     "/edit-profile",
     response_model=EditProfileResponse
@@ -294,35 +299,35 @@ def edit_profile(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=str(e)
         )
-# GOOGLE auth
+#
+#
+#  GOOGLE auth
+
 
 @router.post("/google", response_model=GoogleAuthResponse)
 def google_login(
     request: GoogleAuthRequest,
+    response: Response, 
     service=Depends(get_google_auth_service)
 ):
-    return service.google_login(data=request)
-
-
-@router.post("/google/setup", response_model=GoogleSetupResponse)
-def google_setup(
-    request: GoogleSetupRequest,
-    response: Response,
-    db: Session = Depends(get_db),
-    service=Depends(get_google_auth_service)
-):
-    result = service.google_setup(data=request, db=db)
-    response.set_cookie(
-        key="refresh_token",
-        value=result.refresh_token,
-        httponly=True,
-        secure=False,
-        samesite="lax",
-        max_age=604800,
-    )
+    result = service.google_login(data=request)
+    
+    # ⚡ FIX: Always set the cookie if a refresh token was generated!
+    # Do NOT block it based on requires_workspace_setup.
+    if result.get("refresh_token"):
+        response.set_cookie(
+            key="refresh_token",
+            value=result["refresh_token"],
+            httponly=True,
+            secure=False, # Set to True in production (HTTPS)
+            samesite="lax",
+            max_age=604800,
+            path="/"
+        )
+        
     return result
 
-#-------- request email change route ---------#
+# -------- request email change route ---------#
 @router.post(
     "/request-email-change",
     response_model=RequestEmailChangeResponse
@@ -336,8 +341,10 @@ def request_email_change(
         current_user,
         request
     )
-    
-#-------- verify email change route ---------#
+
+# -------- verify email change route ---------#
+
+
 @router.post(
     "/verify-email-change",
     response_model=VerifyEmailChangeResponse

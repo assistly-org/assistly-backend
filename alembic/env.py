@@ -10,7 +10,7 @@ from app.infrastructure.db.database import Base
 from app.infrastructure.models.auth.users import User
 from app.infrastructure.models.auth.tenants import Tenant
 from app.infrastructure.models.auth.addresses import Address 
-
+from app.infrastructure.models.auth.tenant_members import TenantMember
 # Load environment variables
 load_dotenv()
 # -------------------------

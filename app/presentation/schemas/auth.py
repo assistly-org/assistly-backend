@@ -2,13 +2,20 @@
 from pydantic import BaseModel, EmailStr
 from typing import Dict, Optional
 
+class UserResponseObj(BaseModel):
+    id: str
+    email: str
+    name: Optional[str] = None
+    tenant_slug: Optional[str] = None
+
+
 
 # --- REGISTRATION ---
 class RegisterRequest(BaseModel):
     email: EmailStr
     password: str
-    company_name: str
-    subdomain: str
+    name:str
+    phone: str
 
 
 class RegisterResponse(BaseModel):
@@ -25,7 +32,8 @@ class VerifyResponse(BaseModel):
     message: str
     access_token: str
     token_type: str = "bearer"
-    user: Dict[str, str]
+    requires_workspace_setup: bool         # Added missing field
+    user: UserResponseObj                  # Use the new flexible object
 
 
 # --- LOGIN ---
@@ -38,7 +46,8 @@ class LoginResponse(BaseModel):
     message: str
     access_token: str
     token_type: str = "bearer"
-    user: Dict[str, str]
+    requires_workspace_setup: bool         # Added missing field
+    user: UserResponseObj                  # Use the new flexible object
 
 
 # --- TOKEN REFRESH ---
@@ -112,22 +121,19 @@ class VerifyEmailChangeResponse(BaseModel):
     message: str
 
 
-
-
-
 # --- GOOOGLE AUTH ---
 
-
+# --- GOOGLE AUTH ---
 class GoogleAuthRequest(BaseModel):
     id_token: str
 
-
 class GoogleAuthResponse(BaseModel):
-    requires_setup: bool
-    setup_token: Optional[str] = None
-    access_token: Optional[str] = None
-    refresh_token: Optional[str] = None
     message: str
+    access_token: str
+    refresh_token: str
+    token_type: str = "bearer"
+    requires_workspace_setup: bool
+    user: UserResponseObj  # ⚡ Use the same flexible object we made earlier!
 
 
 class GoogleSetupRequest(BaseModel):
