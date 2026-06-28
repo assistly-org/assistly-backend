@@ -275,7 +275,7 @@ def change_password(
 # -------- edit profile route ---------#
 
 
-@router.put(
+# @router.put(
 #-------- edit profile route ---------#
 @router.patch(
     "/edit-profile",

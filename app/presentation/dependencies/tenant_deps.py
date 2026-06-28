@@ -7,6 +7,8 @@ from app.infrastructure.auth.bcrypt_hash_service import BcryptHashService
 from app.infrastructure.worker.celery_dispatcher import CeleryTaskDispatcher
 from app.application.use_cases.tenant.tenant_setup import TenantSetupService
 
+from app.infrastructure.repositories.agent_repository import AgentRepository
+from app.application.use_cases.agent.process_action import ProcessAgentActionUseCase
 def get_tenant_setup_service(db: Session = Depends(get_db)) -> TenantSetupService:
     return TenantSetupService(
         db=db,
@@ -15,3 +17,30 @@ def get_tenant_setup_service(db: Session = Depends(get_db)) -> TenantSetupServic
         hash_service=BcryptHashService(), # ⚡ Added the Hash Service
         task_dispatcher=CeleryTaskDispatcher()
     )
+
+
+from app.application.use_cases.organization.list_tenants import ListTenantsService
+
+
+def get_tenant_repository(db: Session = Depends(get_db)) -> TenantRepository:
+    return TenantRepository(db)
+
+
+def get_list_tenants_service(
+    repo: TenantRepository = Depends(get_tenant_repository),
+) -> ListTenantsService:
+    return ListTenantsService(repo)
+
+
+# Add this to the bottom of app/presentation/dependencies/tenant_deps.py
+
+
+ 
+
+def get_agent_action_service(
+    db: Session = Depends(get_db),
+) -> ProcessAgentActionUseCase:
+    # 1. Open the database channel
+    repo = AgentRepository(db_session=db)
+    # 2. Hand it to the AI use case engine
+    return ProcessAgentActionUseCase(agent_repo=repo)

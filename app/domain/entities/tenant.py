@@ -4,21 +4,26 @@ from typing import Optional
 
 @dataclass
 class Tenant:
+    # 1. CORE IDENTIFIERS (Updated to str to support your DB UUIDs)
     name: str
     slug: str
     owner_id: str
-    
-    id: Optional[str] = None
-    logo_url: Optional[str] = None
     created_by: Optional[str] = None
-    website_url: Optional[str] = None          
-    widget_api_key_hash: Optional[str] = None  
-    monthly_token_usage: int = 0               
+    id: Optional[str] = None
+    
+    
+    website_url: Optional[str] = None
+    widget_api_key_hash: Optional[str] = None
+    monthly_token_usage: int = 0
+    
+    # 2. MISSING FIELDS (Added to satisfy Pydantic and your DB)
+    status: str = "active"
+    plan_tier: str = "free"
+    is_active: bool = True
+    logo_url: Optional[str] = None
+    created_at: Optional[datetime] = None
 
     # --- Billing fields ---
-    status: str = "active"
-    is_active: bool = True
-    plan_tier: str = "free"
     stripe_customer_id: Optional[str] = None
     stripe_subscription_id: Optional[str] = None
     stripe_price_id: Optional[str] = None
@@ -36,14 +41,7 @@ class Tenant:
             raise ValueError("Company name cannot be empty")
         self.name = new_name
 
-    def suspend_workspace(self) -> None:
-        """Suspend access to the workspace (e.g., for non-payment or TOS violation)."""
-        self.is_active = False
+    # Core Business Logic: Suspending a tenant for non-payment
+    def suspend(self) -> None:
         self.status = "suspended"
-
-    def upgrade_plan(self, new_tier: str) -> None:
-        """Upgrade the workspace billing tier."""
-        valid_tiers = ["free", "pro", "enterprise"]
-        if new_tier not in valid_tiers:
-            raise ValueError(f"Invalid plan tier. Must be one of: {valid_tiers}")
-        self.plan_tier = new_tier
+        self.is_active = False  
