@@ -8,8 +8,16 @@ from app.presentation.middleware.tenant_middlewares.tenant_middleware import Sub
 from app.presentation.routers.tenants import tenant_route
 from app.presentation.routers.auth import auth_service
 
+# In main.py - at the top:
+from app.presentation.routers.agent import agent
+
+# Down below where you include it:
 app = FastAPI(title="Assistly API")
 
+# ⚡ Middleware Order Note:
+# You actually did this perfectly! By adding CORSMiddleware LAST,
+# FastAPI makes it run FIRST on incoming requests. This ensures your
+# browser's preflight OPTIONS requests aren't blocked by your Tenant Bouncer!
 app.add_middleware(SubdomainTenantMiddleware)
 
 app.add_middleware(
@@ -17,12 +25,14 @@ app.add_middleware(
     allow_origins=[
         "http://localhost:3000",
         "http://127.0.0.1:3000",
+        "http://mobilemart.localhost:3000",
     ],
     allow_credentials=True, 
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
+app.include_router(agent.router)
 app.include_router(tenant_route.router)
 app.include_router(auth_service.router)
 

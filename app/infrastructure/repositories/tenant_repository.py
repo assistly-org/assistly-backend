@@ -21,6 +21,7 @@ class TenantRepository(ITenantRepository):
         db_tenant = ORMTenant(
             id=tenant.id,
             slug=tenant.slug,
+            # ⚡ Fallback to slug if name is None to satisfy Postgres
             name=getattr(tenant, 'name', None) or tenant.slug, 
             owner_id=tenant.owner_id,
             created_by=tenant.created_by,
@@ -33,9 +34,10 @@ class TenantRepository(ITenantRepository):
         self.db.flush()
         self.db.refresh(db_tenant)
         
-        # Map the DB generated ID back to the domain object
+        # ⚡ THE MISSING LINK: Manually assign the generated DB ID back to your Domain Entity
         tenant.id = str(db_tenant.id)
         
+        # Now when you return it to the Service, it has the ID!
         return tenant
     
     def get_all_tenants(self) -> list[DomainTenant]:
@@ -82,11 +84,13 @@ class TenantRepository(ITenantRepository):
         return None
 
     def get_by_owner_id(self, owner_id: str) -> Optional[DomainTenant]:
+        # 1. Fetch the ORM model from the database
         db_tenant = self.db.query(ORMTenant).filter(ORMTenant.owner_id == owner_id).first()
         
         if not db_tenant:
             return None
-            
+        # 2. Map ORM model -> Domain Entity
+        # ⚡ Ensure every single argument required by the DomainTenant dataclass is here!
         return DomainTenant(
             id=str(db_tenant.id),
             name=db_tenant.name or "Unknown Tenant", 
@@ -94,6 +98,45 @@ class TenantRepository(ITenantRepository):
             owner_id=str(db_tenant.owner_id),
             created_by=str(getattr(db_tenant, 'created_by', db_tenant.owner_id)) 
         )
+
+    def get_all_by_owner_id(self, owner_id: str) -> list[DomainTenant]:
+        """
+        Fetches ALL active tenants owned by a specific user.
+        """
+        # 1. Query the database for all matching records
+        db_tenants = (
+            self.db.query(ORMTenant)
+            .filter(
+                ORMTenant.owner_id == owner_id,
+                ORMTenant.deleted_at.is_(
+                    None
+                ),  # Crucial: Don't return soft-deleted tenants
+            )
+            .order_by(ORMTenant.created_at.desc())  # Show newest first
+            .all()
+        )
+
+        # 2. Map the list of ORM models into a list of Domain Entities
+        return [
+            DomainTenant(
+                id=str(tenant.id),
+                name=tenant.name or tenant.slug,
+                slug=tenant.slug,
+                owner_id=str(tenant.owner_id),
+                created_by=(
+                    str(tenant.created_by)
+                    if tenant.created_by
+                    else str(tenant.owner_id)
+                ),
+                # ⚡ ADD THESE 5 LINES to fix the missing data!
+                status=tenant.status,
+                plan_tier=tenant.plan_tier,
+                is_active=tenant.is_active,
+                created_at=tenant.created_at,
+                logo_url=tenant.logo_url,
+            )
+            for tenant in db_tenants
+        ]
 
     # ⚡======================================================⚡
     # ⚡ NEW METHOD: ADD MEMBER (Handles Junction Table)
