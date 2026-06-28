@@ -22,7 +22,8 @@ from app.presentation.schemas.auth import (
     RequestEmailChangeResponse,
     VerifyEmailChangeRequest,
     VerifyEmailChangeResponse,
-    
+    UserProfileResponse
+
 )
 from app.presentation.dependencies.auth_deps import (
     get_register_service,
@@ -251,12 +252,13 @@ def reset_password(
 
 @router.get(
     "/profile",
-    response_model=EditProfileResponse
+    response_model=UserProfileResponse
 )
 def profile(
     current_user=Depends(get_current_user)
 ):
     return current_user
+
 
 @router.post(
     "/change-password",
@@ -275,8 +277,6 @@ def change_password(
 # -------- edit profile route ---------#
 
 
-# @router.put(
-#-------- edit profile route ---------#
 @router.patch(
     "/edit-profile",
     response_model=EditProfileResponse
@@ -304,19 +304,18 @@ def edit_profile(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=str(e)
         )
-#
-#
+
 #  GOOGLE auth
 
 
 @router.post("/google", response_model=GoogleAuthResponse)
 def google_login(
     request: GoogleAuthRequest,
-    response: Response, 
+    response: Response,
     service=Depends(get_google_auth_service)
 ):
     result = service.google_login(data=request)
-    
+
     # ⚡ FIX: Always set the cookie if a refresh token was generated!
     # Do NOT block it based on requires_workspace_setup.
     if result.get("refresh_token"):
@@ -324,15 +323,17 @@ def google_login(
             key="refresh_token",
             value=result["refresh_token"],
             httponly=True,
-            secure=False, # Set to True in production (HTTPS)
+            secure=False,  # Set to True in production (HTTPS)
             samesite="lax",
             max_age=604800,
             path="/"
         )
-        
+
     return result
 
 # -------- request email change route ---------#
+
+
 @router.post(
     "/request-email-change",
     response_model=RequestEmailChangeResponse

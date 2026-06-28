@@ -31,3 +31,5 @@ class LeadCaptureModel(TenantBase):
     email = Column(String(255), nullable=True)
     metadata_fields = Column(JSONB, default=dict, nullable=False)
     created_at = Column(DateTime, nullable=True)
+    updated_at = Column(DateTime, nullable=True)
+
