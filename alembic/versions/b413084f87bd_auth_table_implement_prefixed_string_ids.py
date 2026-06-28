@@ -83,7 +83,7 @@ def upgrade() -> None:
     sa.UniqueConstraint('stripe_subscription_id'),
     schema='assistly_auth'
     )
-    # ### end Alembic commands ###
+     # ### end Alembic commands ###
 
 
 def downgrade() -> None:

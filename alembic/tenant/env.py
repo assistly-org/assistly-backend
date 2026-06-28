@@ -6,7 +6,9 @@ from dotenv import load_dotenv
 
 # Import your database Base
 from app.infrastructure.db.database import TenantBase
+# Ensure all tenant-specific models are imported here
 from app.infrastructure.models.tenant.booking import Booking
+from app.infrastructure.models.agent.agent import OmnichannelSessionModel, LeadCaptureModel
 
 load_dotenv()
 config = context.config

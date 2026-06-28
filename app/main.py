@@ -1,20 +1,41 @@
-from fastapi import FastAPI, Depends # <-- Import Depends
-from sqlalchemy.orm import Session
-from app.presentation.middleware.tenant_middlewares.tenant_middleware import SubdomainTenantMiddleware
-from app.infrastructure.db.database import get_db # <-- Import your DB dependency
-from app.presentation.routers.tenants import tenant_route
-from app.presentation.routers.auth import register_service
+from dotenv import load_dotenv
+load_dotenv() 
 
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware 
+
+from app.presentation.middleware.tenant_middlewares.tenant_middleware import SubdomainTenantMiddleware
+from app.presentation.routers.tenants import tenant_route
+from app.presentation.routers.auth import auth_service
+
+# In main.py - at the top:
+from app.presentation.routers.agent import agent
+
+# Down below where you include it:
 app = FastAPI(title="Assistly API")
 
+# ⚡ Middleware Order Note:
+# You actually did this perfectly! By adding CORSMiddleware LAST,
+# FastAPI makes it run FIRST on incoming requests. This ensures your
+# browser's preflight OPTIONS requests aren't blocked by your Tenant Bouncer!
 app.add_middleware(SubdomainTenantMiddleware)
-app.include_router(tenant_route.router)
-app.include_router(register_service.router)
 
-# db: Session = Depends(get_db)
-# Inject the DB dependency here!
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        "http://localhost:3000",
+        "http://127.0.0.1:3000",
+        "http://mobilemart.localhost:3000",
+    ],
+    allow_credentials=True, 
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+app.include_router(agent.router)
+app.include_router(tenant_route.router)
+app.include_router(auth_service.router)
+
 @app.get("/")
 def server_status():
-    # The moment FastAPI tries to inject 'db' here, it runs get_db(), 
-    # attempts to switch the schema, fails, and throws your 404!
-    return {"status":"Fast API Server Started ..."}
+    return {"status": "Assistly API Server Started & Running ..."}

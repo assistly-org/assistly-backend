@@ -1,4 +1,3 @@
-# app/presentation/dependencies.py
 from fastapi import Depends
 from sqlalchemy.orm import Session
 from app.infrastructure.db.database import get_db
@@ -6,57 +5,196 @@ from app.infrastructure.db.database import get_db
 from app.infrastructure.repositories.user_repository import UserRepository
 from app.infrastructure.repositories.tenant_repository import TenantRepository
 from app.infrastructure.auth.bcrypt_hash_service import BcryptHashService
-from app.application.use_cases.auth.user_register import RegisterService
-from app.application.use_cases.auth.user_verify import VerifyService
+from app.infrastructure.auth.jwt_services import JwtService
 from app.infrastructure.worker.email.smtp_services import EmailService
 from app.infrastructure.cache.redis_service import RedisService
-from app.infrastructure.auth.jwt_services import JwtService
-
-# ⚡ Import your new dispatcher
 from app.infrastructure.worker.celery_dispatcher import CeleryTaskDispatcher
 
+from app.application.use_cases.auth.user_register import RegisterService
+from app.application.use_cases.auth.user_verify import VerifyService
+from app.application.use_cases.auth.user_login import LoginService
+
+from app.application.use_cases.auth.refresh_token import RefreshTokenService
+from app.application.use_cases.auth.user_logout import LogoutService
+
+from app.application.use_cases.auth.forgot_password import ForgotPasswordService
+from app.application.use_cases.auth.verify_forgot_password import VerifyForgotPasswordService
+from app.application.use_cases.auth.reset_password import ResetPasswordService
+from app.application.use_cases.auth.change_password import ChangePasswordService
+
+from app.infrastructure.auth.google_auth_service import GoogleAuthService as GoogleAuthImpl
+from app.application.use_cases.auth.google_auth import GoogleAuthService
+from app.infrastructure.auth.jwt_services import JwtService
+from app.application.use_cases.auth.edit_profile import EditProfileService
+
+from app.application.use_cases.auth.request_email_change import RequestEmailChangeService
+from app.application.use_cases.auth.verify_email_change import VerifyEmailChangeService
 
 def get_verify_service(db: Session = Depends(get_db)) -> VerifyService:
     user_repo = UserRepository(db)
-    tenant_repo = TenantRepository(db)
     cache_service = RedisService()
     token_service = JwtService()
     
-    # ⚡ Initialize the dispatcher
-    task_dispatcher = CeleryTaskDispatcher()
 
     return VerifyService(
+        db=db,
         user_repo=user_repo,
-        tenant_repo=tenant_repo,
         cache_service=cache_service,
         token_service=token_service,
-        task_dispatcher=task_dispatcher, 
     )
 
 
 def get_register_service(db: Session = Depends(get_db)) -> RegisterService:
-    """
-    Builds and returns a fully initialized RegisterService.
-    FastAPI will automatically run this whenever a route requests it.
-    """
-    # 1. Provide the DB session to the Repositories
     user_repo = UserRepository(db)      
     tenant_repo = TenantRepository(db)  
     email_service = EmailService()
-
-    # 2. Initialize the Hash Service and Cache
     hash_service = BcryptHashService()
     cache_service = RedisService()
-    
-    # ⚡ 3. Initialize the dispatcher (ADD THIS LINE)
     task_dispatcher = CeleryTaskDispatcher()
 
-    # 4. Inject all dependencies into the Service
     return RegisterService(
         user_repo=user_repo,
         tenant_repo=tenant_repo,
         hash_service=hash_service,
         email_service=email_service,
         cache_service=cache_service,  
-        task_dispatcher=task_dispatcher, # ⚡ ADD THIS LINE to fix the TypeError!
+        task_dispatcher=task_dispatcher,
+    )
+
+
+def get_login_service(db: Session = Depends(get_db)) -> LoginService:
+    """
+    Builds the LoginService so the Router doesn't have to.
+    """
+    user_repo = UserRepository(db)
+    hash_service = BcryptHashService() 
+    token_service = JwtService() 
+
+    return LoginService(
+        user_repo=user_repo, 
+        hash_service=hash_service, 
+        token_service=token_service
+
+    )
+
+def get_refresh_service(db: Session = Depends(get_db)) -> RefreshTokenService:
+    user_repo = UserRepository(db)
+    tenant_repo = TenantRepository(db) 
+    token_service = JwtService()
+    cache_service = RedisService() 
+    
+    return RefreshTokenService(
+        user_repo=user_repo, 
+        tenant_repo=tenant_repo, 
+        token_service=token_service,
+        cache_service=cache_service 
+    )
+
+def get_logout_service() -> LogoutService:
+    cache_service = RedisService()
+    return LogoutService(cache_service=cache_service)
+
+
+#------- FORGOT PASSWORD DEPENDENCIES -------#
+
+def get_forgot_password_service(
+    db: Session = Depends(get_db)
+) -> ForgotPasswordService:
+
+    user_repo = UserRepository(db)
+    cache_service = RedisService()
+    task_dispatcher = CeleryTaskDispatcher()
+
+    return ForgotPasswordService(
+        user_repo=user_repo,
+        cache_service=cache_service,
+        task_dispatcher=task_dispatcher
+    )
+    
+    
+def get_verify_forgot_password_service():
+    cache_service = RedisService()
+
+    return VerifyForgotPasswordService(
+        cache_service=cache_service
+    )
+    
+
+
+def get_reset_password_service(
+    db: Session = Depends(get_db)
+) -> ResetPasswordService:
+
+    user_repo = UserRepository(db)
+    hash_service = BcryptHashService()
+    cache_service = RedisService()
+
+    return ResetPasswordService(
+        db=db,
+        user_repo=user_repo,
+        hash_service=hash_service,
+        cache_service=cache_service
+    )
+    
+    
+#-------change password dependency-------#
+
+def get_change_password_service(
+    db: Session = Depends(get_db)
+):
+    user_repo = UserRepository(db)
+    hash_service = BcryptHashService()
+
+    return ChangePasswordService(
+        user_repo=user_repo,
+        hash_service=hash_service
+    )
+    
+
+#------- edit profile dependency -------#
+
+def get_edit_profile_service(
+    db: Session = Depends(get_db)
+):
+    user_repo = UserRepository(db)
+
+    return EditProfileService(
+        user_repo=user_repo
+    )
+
+#------- google auth dependency -------#
+
+def get_google_auth_service(db: Session = Depends(get_db)) -> GoogleAuthService:
+    return GoogleAuthService(
+        db=db,
+        user_repo=UserRepository(db),
+        google_service=GoogleAuthImpl(),
+        token_service=JwtService(),
+    )
+    
+#-----emil change dependencies-----#
+
+def get_request_email_change_service(
+    db: Session = Depends(get_db)
+):
+    user_repo = UserRepository(db)
+    cache_service = RedisService()
+    task_dispatcher = CeleryTaskDispatcher()
+
+    return RequestEmailChangeService(
+        user_repo=user_repo,
+        cache_service=cache_service,
+        task_dispatcher=task_dispatcher
+    )
+
+
+def get_verify_email_change_service(
+    db: Session = Depends(get_db)
+):
+    user_repo = UserRepository(db)
+    cache_service = RedisService()
+
+    return VerifyEmailChangeService(
+        user_repo=user_repo,
+        cache_service=cache_service
     )

@@ -1,14 +1,15 @@
 import random
 import json
 import logging
+import re
+
 from app.presentation.schemas.auth import RegisterRequest, RegisterResponse
 from app.domain.exceptions import ValidationError
-from app.domain.exceptions import UserAlreadyExistsError, SubdomainTakenError
+from app.domain.exceptions import UserAlreadyExistsError
 
 logger = logging.getLogger("assistly")
 
-import re
-
+# --- BULLETPROOF VALIDATORS ---
 
 def validate_password(password: str) -> None:
     if len(password) < 8:
@@ -23,15 +24,16 @@ def validate_email(email: str) -> None:
         raise ValidationError("Invalid email address")
 
 
+
 class RegisterService:
     def __init__(
         self, 
         user_repo, 
         tenant_repo, 
         hash_service, 
-        email_service, # Note: if email_service was handling the dispatch, use that, otherwise use task_dispatcher
+        email_service, 
         cache_service,
-        task_dispatcher # ⚡ Inject the Celery abstractor
+        task_dispatcher 
     ):
         self.user_repo = user_repo
         self.tenant_repo = tenant_repo
@@ -41,9 +43,10 @@ class RegisterService:
         self.task_dispatcher = task_dispatcher
 
     def register(self, data: RegisterRequest) -> RegisterResponse:
-        # --- PRE-FLIGHT CHECKS ---
-        validate_password(data.password) # Now throws ValidationError
-        validate_email(data.email)       # Now throws ValidationError
+        # --- PRE-FLIGHT CHECKS & VALIDATION ---
+        validate_password(data.password) 
+        validate_email(data.email)       
+       
         
         user = self.user_repo.get_by_email(data.email)
 
@@ -53,8 +56,6 @@ class RegisterService:
                 raise UserAlreadyExistsError("Account exists but is unverified. Please request a new OTP.")
             raise UserAlreadyExistsError("Email already registered")
 
-        if self.tenant_repo.get_by_slug(data.subdomain):
-            raise SubdomainTakenError("Subdomain already taken")
 
         # --- PREPARE PAYLOAD ---
         hashed_password = self.hash_service.hash_password(data.password)
@@ -64,8 +65,8 @@ class RegisterService:
         payload = json.dumps({
             "email": data.email,
             "password_hash": hashed_password,
-            "company_name": data.company_name,
-            "subdomain": data.subdomain,
+            "name": data.name,
+            "phone": data.phone,
             "otp": otp_code,
         })
 
@@ -73,7 +74,6 @@ class RegisterService:
         self.cache_service.set(f"registration:{data.email}", 300, payload)
 
         # --- DISPATCH OTP EMAIL VIA INTERFACE ---
-        # ⚡ No more hardcoded Celery imports!
         self.task_dispatcher.dispatch_otp_email(data.email, otp_code)
 
         logger.info(f"Registration payload cached for {data.email}. OTP dispatched.")
