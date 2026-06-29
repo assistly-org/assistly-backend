@@ -48,6 +48,7 @@ class TenantSetupService:
             
             # Flush to generate the new_tenant.id
             self.db.flush() 
+            print(f"DEBUG: The new tenant ID is {new_tenant.id}")
 
             # --- 4. CREATE MEMBERSHIP (Assign 'owner' role) ---
             new_membership = TenantMember(
