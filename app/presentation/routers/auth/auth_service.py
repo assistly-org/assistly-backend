@@ -272,10 +272,10 @@ def change_password(
         request
     )
 
-# -------- edit profile route ---------#
 
 
-@router.put(
+
+
 #-------- edit profile route ---------#
 @router.patch(
     "/edit-profile",
