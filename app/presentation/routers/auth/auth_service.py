@@ -274,9 +274,11 @@ def change_password(
         request
     )
 
-# -------- edit profile route ---------#
 
 
+
+
+#-------- edit profile route ---------#
 @router.patch(
     "/edit-profile",
     response_model=EditProfileResponse
