@@ -15,12 +15,12 @@ logger = logging.getLogger("assistly")
     # Celery will make sure across your entire cluster, at most 5 schemas per second start migrating.
     rate_limit="5/s"
 )
-def migrate_single_tenant_schema(self, slug: str):
+def migrate_single_tenant_schema(self, subdomain: str):
     """
     Isolated, background worker task to upgrade a single schema.
     If one schema out of 10k fails, it retries independently without stalling others.
     """
-    schema_name = f"tenant_{slug}"
+    schema_name = f"tenant_{subdomain}"
     logger.info(f"🚀 Celery worker processing batch upgrade for: {schema_name}")
 
     # Calculate absolute base directory dynamically

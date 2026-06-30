@@ -48,7 +48,7 @@ class User(Base):
         Boolean, default=True, nullable=False)
     is_verified: Mapped[bool] = mapped_column(
         Boolean, default=False, nullable=False)  # Fixed typo and default
-    last_active_tenant_slug: Mapped[Optional[str]
+    last_active_tenant_subdomain: Mapped[Optional[str]
                                     ] = mapped_column(String(255), nullable=True)
 
     created_at: Mapped[datetime] = mapped_column(DateTime(

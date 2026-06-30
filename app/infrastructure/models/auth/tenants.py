@@ -18,7 +18,7 @@ class Tenant(Base):
     id: Mapped[str] = mapped_column(
         String(50), primary_key=True, default=lambda: f"tnt-{uuid.uuid4().hex[:16]}")
     name: Mapped[str] = mapped_column(String(255), nullable=False)
-    slug: Mapped[str] = mapped_column(String(255), unique=True, nullable=False)
+    subdomain: Mapped[str] = mapped_column(String(255), unique=True, nullable=False)
     website_url: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
     logo_url: Mapped[Optional[str]] = mapped_column(String, nullable=True)
 
@@ -64,6 +64,8 @@ class Tenant(Base):
         String(255), nullable=True)
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=text(
         "CURRENT_TIMESTAMP"), onupdate=lambda: datetime.now(timezone.utc), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(
+        timezone=True), server_default=text("CURRENT_TIMESTAMP"), nullable=False)
     deleted_at: Mapped[Optional[datetime]] = mapped_column(
         DateTime(timezone=True), nullable=True)
 

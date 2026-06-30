@@ -44,13 +44,13 @@ class GoogleAuthService:
                     oauth_id=google_data.get("google_id"),
                     is_active=True,
                     is_verified=True, 
-                    last_active_tenant_slug=None
+                    last_active_tenant_subdomain=None
                 )
                 user = self.user_repo.create_user(user)
                 self.db.commit()
 
             # --- 4. MULTI-TENANT ROUTING ---
-            tenant_slug = user.last_active_tenant_slug
+            tenant_subdomain = user.last_active_tenant_subdomain
 
             # --- 5. GENERATE TOKENS ---
             token_payload = {
@@ -69,12 +69,12 @@ class GoogleAuthService:
                 "access_token": access_token,
                 "refresh_token": refresh_token,
                 "token_type": "bearer",
-                "requires_workspace_setup": True if not tenant_slug else False,
+                "requires_workspace_setup": True if not tenant_subdomain else False,
                 "user": {
                     "id": str(user.id),
                     "email": user.email,
                     "name": user.name,
-                    "tenant_slug": tenant_slug
+                    "tenant_subdomain": tenant_subdomain
                 }
             }
 

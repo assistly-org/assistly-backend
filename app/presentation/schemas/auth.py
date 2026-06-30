@@ -5,7 +5,7 @@ class UserResponseObj(BaseModel):
     id: str
     email: str
     name: Optional[str] = None
-    tenant_slug: Optional[str] = None
+    tenant_subdomain: Optional[str] = None
 
 # --- PROFILE GET ---
 class UserProfileResponse(BaseModel):
@@ -18,7 +18,7 @@ class UserProfileResponse(BaseModel):
     timezone: str | None = None
     is_active: bool
     is_verified: bool
-    last_active_tenant_slug: str | None = None
+    last_active_tenant_subdomain: str | None = None
 
     class Config:
         from_attributes = True

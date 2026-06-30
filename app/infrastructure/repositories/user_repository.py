@@ -25,7 +25,7 @@ class UserRepository(IUserRepository):
             is_verified=user.is_verified,
             auth_provider=user.auth_provider,
             is_system_admin=user.is_system_admin,
-            last_active_tenant_slug=user.last_active_tenant_slug
+            last_active_tenant_subdomain=user.last_active_tenant_subdomain
         )
         
         self.db.add(db_user)
@@ -53,7 +53,7 @@ class UserRepository(IUserRepository):
             is_verified=db_user.is_verified,
             auth_provider=db_user.auth_provider,
             is_system_admin=db_user.is_system_admin,
-            last_active_tenant_slug=db_user.last_active_tenant_slug
+            last_active_tenant_subdomain=db_user.last_active_tenant_subdomain
         )
 
     def get_by_id(self, user_id: str) -> DomainUser | None:
@@ -73,7 +73,7 @@ class UserRepository(IUserRepository):
                 is_verified=db_user.is_verified,
                 auth_provider=db_user.auth_provider,
                 is_system_admin=db_user.is_system_admin,
-                last_active_tenant_slug=db_user.last_active_tenant_slug
+                last_active_tenant_subdomain=db_user.last_active_tenant_subdomain
             )
         return None
 
@@ -89,7 +89,7 @@ class UserRepository(IUserRepository):
             db_user.password_hash = user.password_hash
             db_user.is_active = user.is_active
             db_user.is_verified = user.is_verified
-            db_user.last_active_tenant_slug = user.last_active_tenant_slug
+            db_user.last_active_tenant_subdomain = user.last_active_tenant_subdomain
             
             self.db.flush()
             self.db.refresh(db_user)

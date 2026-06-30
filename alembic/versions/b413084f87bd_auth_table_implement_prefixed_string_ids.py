@@ -55,7 +55,7 @@ def upgrade() -> None:
     op.create_table('tenant',
     sa.Column('id', sa.String(length=50), nullable=False),
     sa.Column('name', sa.String(length=255), nullable=False),
-    sa.Column('slug', sa.String(length=255), nullable=False),
+    sa.Column('subdomain', sa.String(length=255), nullable=False),
     sa.Column('logo_url', sa.String(), nullable=True),
     sa.Column('status', sa.String(length=50), nullable=False),
     sa.Column('is_active', sa.Boolean(), nullable=False),
@@ -78,7 +78,7 @@ def upgrade() -> None:
     sa.ForeignKeyConstraint(['created_by'], ['assistly_auth.users.id'], ondelete='SET NULL'),
     sa.ForeignKeyConstraint(['owner_id'], ['assistly_auth.users.id'], ondelete='RESTRICT'),
     sa.PrimaryKeyConstraint('id'),
-    sa.UniqueConstraint('slug'),
+    sa.UniqueConstraint('subdomain'),
     sa.UniqueConstraint('stripe_customer_id'),
     sa.UniqueConstraint('stripe_subscription_id'),
     schema='assistly_auth'

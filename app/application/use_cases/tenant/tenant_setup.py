@@ -25,7 +25,7 @@ class TenantSetupService:
 
     def execute(self, current_user, data: TenantCreateRequest) -> dict:
         # --- 1. VALIDATE SUBDOMAIN ---
-        if self.tenant_repo.get_by_slug(data.subdomain):
+        if self.tenant_repo.get_by_subdomain(data.subdomain):
             raise SubdomainTakenError("This workspace URL is already in use.")
 
         try:
@@ -37,7 +37,7 @@ class TenantSetupService:
             # --- 3. CREATE TENANT ---
             new_tenant = Tenant(
                 name=data.company_name,
-                slug=data.subdomain,
+                subdomain=data.subdomain,
                 website_url=str(data.website_url), # Convert HttpUrl to string
                 widget_api_key_hash=hashed_api_key,
                 monthly_token_usage=0, # Start at 0
@@ -60,7 +60,7 @@ class TenantSetupService:
             self.tenant_repo.add_member(new_membership)
 
             # --- 5. UPDATE USER'S ACTIVE ROUTING ---
-            current_user.last_active_tenant_slug = new_tenant.slug
+            current_user.last_active_tenant_subdomain = new_tenant.subdomain
             self.user_repo.update_user(current_user)
 
             # --- 6. COMMIT EVERYTHING ---
@@ -68,15 +68,15 @@ class TenantSetupService:
 
             # --- 7. DISPATCH CELERY TASK ---
             # Creates the isolated schema & pgvector tables in the background!
-            self.task_dispatcher.dispatch_tenant_creation(new_tenant.slug)
+            self.task_dispatcher.dispatch_tenant_creation(new_tenant.subdomain)
 
-            logger.info(f"Workspace '{new_tenant.slug}' created by {current_user.email}.")
+            logger.info(f"Workspace '{new_tenant.subdomain}' created by {current_user.email}.")
 
             # ⚡ Return the RAW api key just this one time so the UI can display it
             return {
                 "message": "Workspace created successfully!",
                 "tenant_id": str(new_tenant.id),
-                "tenant_slug": new_tenant.slug,
+                "tenant_subdomain": new_tenant.subdomain,
                 "widget_api_key": raw_api_key,
                 "website_url" : new_tenant.website_url
             }

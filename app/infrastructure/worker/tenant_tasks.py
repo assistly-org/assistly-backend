@@ -7,27 +7,27 @@ from app.infrastructure.db.tenant_provisioning import create_tenant_schema_and_m
 logger = logging.getLogger("assistly")
 
 @celery_app.task(name="tenant_create")
-def tenant_create_task(tenant_slug: str):
+def tenant_create_task(tenant_subdomain: str):
     """
     Background task to provision a completely isolated PostgreSQL schema 
     and execute Alembic/SQLAlchemy migrations for a new tenant.
     """
-    logger.info(f"Celery worker spinning up isolated provisioning thread for: '{tenant_slug}'")
+    logger.info(f"Celery worker spinning up isolated provisioning thread for: '{tenant_subdomain}'")
     
     # Open a fresh database session inside the worker process
     db = SessionLocal()
     
     try:
         # Run the heavy schema creation and migration logic
-        create_tenant_schema_and_migrate(db, tenant_slug)
+        create_tenant_schema_and_migrate(db, tenant_subdomain)
         db.commit()
         
-        logger.info(f"Database infrastructure successfully provisioned for tenant: '{tenant_slug}'")
-        return f"Tenant schema '{tenant_slug}' is ready."
+        logger.info(f"Database infrastructure successfully provisioned for tenant: '{tenant_subdomain}'")
+        return f"Tenant schema '{tenant_subdomain}' is ready."
         
     except Exception as e:
         db.rollback()
-        logger.error(f"Asynchronous provisioning crashed for tenant: '{tenant_slug}'", exc_info=True)
+        logger.error(f"Asynchronous provisioning crashed for tenant: '{tenant_subdomain}'", exc_info=True)
         # Re-raise the exception so Celery logs it as a failed task
         raise e
         

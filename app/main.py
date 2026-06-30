@@ -12,9 +12,10 @@ from app.presentation.routers.websocket.chat import router as websocket_router
 
 # In main.py - at the top:
 from app.presentation.routers.agent import agent
-
+from app.presentation.routers.tenants import organizations
 # Down below where you include it:
 app = FastAPI(title="Assistly API")
+
 
 # ⚡ Middleware Order Note:
 # You actually did this perfectly! By adding CORSMiddleware LAST,
@@ -39,8 +40,8 @@ app.include_router(agent.router)
 app.include_router(tenant_route.router)
 app.include_router(auth_service.router)
 app.include_router(analytics_route.router)
-for route in app.routes:
-    print(f"Route: {route.path}")
+app.include_router(organizations.router)
+
 
 @app.get("/")
 def server_status():

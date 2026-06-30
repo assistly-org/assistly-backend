@@ -9,7 +9,7 @@ from app.application.use_cases.tenant.tenant_setup import TenantSetupService
 from app.application.use_cases.organization.list_tenants import ListTenantsService
 from app.infrastructure.repositories.agent_repository import AgentRepository
 from app.application.use_cases.agent.process_action import ProcessAgentActionUseCase
-
+from app.application.use_cases.tenant.delete_tenant_use_case import DeleteTenantUseCase
 
 def get_tenant_setup_service(db: Session = Depends(get_db)) -> TenantSetupService:
     return TenantSetupService(
@@ -41,3 +41,9 @@ def get_agent_action_service(
     repo = AgentRepository(db_session=db)
     # 2. Hand it to the AI use case engine
     return ProcessAgentActionUseCase(agent_repo=repo)
+
+# For deleting the tanent 
+
+def get_delete_tenant_service(db: Session = Depends(get_db)) -> DeleteTenantUseCase:
+    repository = TenantRepository(db)
+    return DeleteTenantUseCase(tenant_repo=repository)
