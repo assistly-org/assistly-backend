@@ -10,13 +10,18 @@ class ITenantRepository(ABC):
         pass
 
     @abstractmethod
+    def delete_tenant_and_schema(self, tenant: DomainTenant) -> None:
+        """Permanently remove a tenant and drop their schema."""
+        pass
+
+    @abstractmethod
     def get_all_tenants(self) -> list[DomainTenant]:
         """Fetch all tenants from storage."""
         pass
 
     @abstractmethod
-    def get_by_slug(self, slug: str) -> Optional[DomainTenant]:
-        """Retrieves a tenant by their unique subdomain workspace slug."""
+    def get_by_subdomain(self, subdomain: str) -> Optional[DomainTenant]:
+        """Retrieves a tenant by their unique subdomain workspace subdomain."""
         pass
 
     @abstractmethod

@@ -6,10 +6,13 @@ from datetime import datetime
 class TenantSummary(BaseModel):
     id: str
     name: str
-    slug: str
+    subdomain: str
     status: str
     plan_tier: str
     is_active: bool
+    website_url: Optional[str] = None
+    owner_name : str
+    created_by : str
 
     # FIX: Make this Optional so it doesn't crash if the DB returns None
     created_at: Optional[datetime] = None

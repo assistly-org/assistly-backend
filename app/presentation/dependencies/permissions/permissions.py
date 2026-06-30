@@ -74,7 +74,7 @@ class RequireRole:
 
         # --- 3. FETCH THE WORKSPACE ---
         tenant = db.query(Tenant).filter(
-            Tenant.slug == url_subdomain,
+            Tenant.subdomain == url_subdomain,
             Tenant.is_active == True
         ).first()
 
@@ -107,7 +107,7 @@ class RequireRole:
         return {
             "user_id": user_id,
             "tenant_id": tenant.id,
-            "tenant_slug": tenant.slug,
+            "tenant_subdomain": tenant.subdomain,
             "role": membership.role
         }
 

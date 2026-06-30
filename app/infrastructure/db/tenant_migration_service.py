@@ -18,32 +18,32 @@ def migrate_all_existing_tenants(db: Session):
     logger.info("Initializing enterprise multi-tenant migration dispatcher...")
 
     try:
-        # 1. Grab only the slugs directly using raw SQL (lightning fast even for 10k rows)
-        result = db.execute(text("SELECT slug FROM assistly_auth.tenants;"))
-        slugs = [row[0] for row in result.fetchall()]
+        # 1. Grab only the subdomains directly using raw SQL (lightning fast even for 10k rows)
+        result = db.execute(text("SELECT subdomain FROM assistly_auth.tenants;"))
+        subdomains = [row[0] for row in result.fetchall()]
         # 2. The template schema is a system blueprint, not a customer tenant.
         # It does not exist in the tenants table, so append it manually to ensure
         # it always receives the latest migrations before customer schemas.
         logger.info(
             "📐 Adding system template schema to migration queue (tenant_template is not stored in assistly_auth.tenants)."
         )
-        slugs.append("template")
+        subdomains.append("template")
     except Exception as e:
-        logger.error(f"❌ Failed to fetch tenant slugs from database. Error: {str(e)}")
+        logger.error(f"❌ Failed to fetch tenant subdomains from database. Error: {str(e)}")
         return
 
-    if not slugs:
+    if not subdomains:
         logger.info("No existing tenants found to queue.")
         return
 
     logger.info(
-        f"📊 Found {len(slugs)} tenants registered. Fanning out asynchronous tasks..."
+        f"📊 Found {len(subdomains)} tenants registered. Fanning out asynchronous tasks..."
     )
 
     # 2. Push tasks instantly onto the Celery broker message line
     dispatched_count = 0
-    for slug in slugs:
-        migrate_single_tenant_schema.delay(slug)
+    for subdomain in subdomains:
+        migrate_single_tenant_schema.delay(subdomain)
         dispatched_count += 1
 
     logger.info(

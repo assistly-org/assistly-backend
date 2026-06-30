@@ -6,8 +6,9 @@ from typing import Optional
 class Tenant:
     # 1. CORE IDENTIFIERS (Updated to str to support your DB UUIDs)
     name: str
-    slug: str
+    subdomain: str
     owner_id: str
+    owner_name: Optional[str] = None
     created_by: Optional[str] = None
     id: Optional[str] = None
     
@@ -22,6 +23,7 @@ class Tenant:
     is_active: bool = True
     logo_url: Optional[str] = None
     created_at: Optional[datetime] = None
+    updated_at: Optional[datetime] = None
 
     # --- Billing fields ---
     stripe_customer_id: Optional[str] = None

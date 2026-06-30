@@ -104,7 +104,7 @@ class MockLoginService:
             "access_token": "fake_access_jwt",
             "refresh_token": "fake_refresh_jwt",
             "token_type": "bearer",
-            "user": {"id": "1", "email": data.email, "tenant_slug": "test_slug"}
+            "user": {"id": "1", "email": data.email, "tenant_subdomain": "test_subdomain"}
         }
 
 
@@ -215,7 +215,7 @@ class MockVerifyService:
             "access_token": "verified_access_jwt",
             "refresh_token": "verified_refresh_jwt",
             "token_type": "bearer",
-            "user": {"id": "1", "email": data.email, "tenant_slug": "mycompany"}
+            "user": {"id": "1", "email": data.email, "tenant_subdomain": "mycompany"}
         }
 
 

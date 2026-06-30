@@ -17,7 +17,7 @@ class User:
     is_system_admin: bool = False
     is_active: bool = True
     is_verified: bool = False
-    last_active_tenant_slug: Optional[str] = None
+    last_active_tenant_subdomain: Optional[str] = None
 
     created_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
 
@@ -32,6 +32,6 @@ class User:
         """Mark the user as verified after OTP success."""
         self.is_verified = True
 
-    def update_last_workspace(self, tenant_slug: str) -> None:
+    def update_last_workspace(self, tenant_subdomain: str) -> None:
         """Track the last workspace they logged into for seamless UX."""
-        self.last_active_tenant_slug = tenant_slug
+        self.last_active_tenant_subdomain = tenant_subdomain

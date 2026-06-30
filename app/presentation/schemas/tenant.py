@@ -9,6 +9,6 @@ class TenantCreateRequest(BaseModel):
 class TenantCreateResponse(BaseModel):
     message: str
     tenant_id: str
-    tenant_slug: str
+    tenant_subdomain: str
     website_url: str
     widget_api_key: str  # ⚡ We only show this ONCE!
